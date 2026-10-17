@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logopandecteision Explained</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --ink2: #4d463c; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --bar: #b0603f; --bar-dim: #d9c3b4; --quote: #f1ead9;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --bar: #d98a64; --bar-dim: #5a4a3e; --quote: #2c2823;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --bar: #d98a64; --bar-dim: #5a4a3e; --quote: #2c2823;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.62 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+.wrap { max-width: 900px; margin: 0 auto; padding: 34px 16px 80px; }
+h1 { font-size: 34px; margin: 0 0 4px; font-variant: small-caps; letter-spacing: .02em; line-height: 1.2; }
+h2 { font-size: 23px; margin: 44px 0 10px; font-variant: small-caps; letter-spacing: .02em; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+h3 { font-size: 18px; margin: 26px 0 6px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.sans { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+a { color: var(--accent); }
+.answers { display: grid; gap: 14px; }
+.answer { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; }
+.answer .q { font: 600 12.5px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.answer .a { font-size: 20px; font-weight: 600; margin: 4px 0 4px; }
+.answer p { margin: 6px 0 0; color: var(--ink2); }
+blockquote { margin: 12px 0; padding: 10px 16px; background: var(--quote); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; color: var(--ink2); }
+blockquote cite { display: block; margin-top: 4px; font: 12.5px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--muted); font-style: normal; }
+table { border-collapse: collapse; width: 100%; font: 14.5px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+td i { font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 15.5px; }
+.tablewrap { overflow-x: auto; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; margin: 14px 0; }
+.tech { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 12px 18px; margin: 12px 0; }
+.tech h3 { margin: 0 0 4px; font-size: 17.5px; }
+.tech p { margin: 6px 0; }
+.note { color: var(--muted); font-size: 14.5px; }
+ul li { margin: 5px 0; }
+/* chart */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 5px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -115%); opacity: 0; transition: opacity .08s; }
+.chart text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.chart .lab { fill: var(--ink2); font-size: 13px; }
+.chart .val { fill: var(--muted); font-size: 12px; }
+footer { margin-top: 50px; color: var(--muted); font-size: 13.5px; }
+.wrap { overflow-wrap: break-word; }
+@media (max-width: 520px) { h1 { font-size: 26px; } h2 { font-size: 20px; } .answer .a { font-size: 18px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Logopandecteision: what it is, and what it was for</h1>
+<p class="sub">Sir Thomas Urquhart, <i>Logopandecteision, or an Introduction to the Universal Language</i> (London: Giles Calvert and Richard Tomlins, 1653). Read in the 1653 edition (Early English Books microfilm) and in the Maitland Club reprint, <i>The Works of Sir Thomas Urquhart</i> (Edinburgh, 1834), pp. 297–419. Page numbers below are those of the 1834 reprint.</p>
+
+<div class="answers">
+  <div class="answer">
+    <div class="q">What is it?</div>
+    <div class="a">A petition for his freedom and his estates, presented as the introduction to a miraculous new language.</div>
+    <p>Urquhart wrote it in London in 1652–53, while he was a prisoner on parole after the Battle of Worcester, and addressed it to the English Commonwealth. The title promises a universal language. The book itself is the "introduction" to that language, and the grammar and lexicon it advertises were never published.</p>
+  </div>
+  <div class="answer">
+    <div class="q">Just a demonstration of a new language?</div>
+    <div class="a">No. The language is the bait; the book is a means to an end, and Urquhart says so himself.</div>
+    <p>Only about a sixth of the book discusses the language. The rest argues that his creditors, the Presbyterian Kirk and unsympathetic judges should be removed from his path. The final Book states plainly that publishing the language "depend[s] totally upon the removal" of those obstacles.</p>
+  </div>
+  <div class="answer">
+    <div class="q">What did he want readers to get out of it?</div>
+    <div class="a">Wonder, then indignation, then action.</div>
+    <p>He wanted readers to be dazzled by what his mind could produce and outraged at the people blocking it. Above all he wanted them convinced that restoring him to Cromarty was in the public interest. The intended readers ranged from the Council of State to the general "generous Reader".</p>
+  </div>
+</div>
+
+<h2>The book in brief</h2>
+<p>The work has a title page with a Latin motto: "To grant him his demands were it not just? / Who craves no more, then reason sayes he must". It then runs through a mock dedication, six "Books" each named with a coined Greek title, a note "To the Reader", and 32 numbered "Proquiritations" (formal demands). Every Book opens with a summary of its own argument, written in the third person ("the Author… proveth").</p>
+<div class="tablewrap"><table>
+<tr><th>Part</th><th>Title (Urquhart's own gloss)</th><th>What it does</th></tr>
+<tr><td>Dedication</td><td><i>The Epistle Dedicatorie, to No-body</i></td><td>Ironic thanks to "No-body" for all the help he received after Worcester: in other words, nobody helped him.</td></tr>
+<tr><td>Book 1</td><td><i>Neaudethaumata</i>: Wonders of the New Speech</td><td>Sets out the theory of a perfect language and lists its "sixty and six advantages". Also includes "miscellanie articles concerning the Author himself". The 1834 editor notes it is largely a reprint of the preface to <i>The Jewel</i> (1652).</td></tr>
+<tr><td>Book 2</td><td><i>Chrestasebeia</i>: the impious dealing of creditors</td><td>Names the main obstacle: his late father's creditors. Argues that his inventions should count as "moveable goods" protected by law.</td></tr>
+<tr><td>Book 3</td><td><i>Cleronomaporia</i>: the intricacy of a distressed heir</td><td>The family story: an honest, over-trusting father ruined by "cunning sharks". Precedents from many nations for preserving ancient families.</td></tr>
+<tr><td>Book 4</td><td><i>Chryseomystes</i>: the covetous preacher</td><td>The second obstacle: the Presbyterian Commission of the Kirk, which cut his church revenues. A long digression on fables, sorcery and false witchcraft accusations.</td></tr>
+<tr><td>Book 5</td><td><i>Neleodicastes</i>: the pitiless judge</td><td>The third obstacle: courts and committees that gave him no redress. Losses to soldiers, the creditors' "implacability", and prodigality against covetousness.</td></tr>
+<tr><td>Book 6</td><td><i>Philoponauxesis</i>: furtherance of industry</td><td>Argues that granting his demands would benefit merchants, scholars, farmers, tradesmen and gentry alike. Describes the kind of judge he wants.</td></tr>
+<tr><td>Ending</td><td><i>To the Reader</i>; <i>Proquiritations</i></td><td>Enlists the reader's self-interest, then 32 formal demands, each signed with a pair of initials. (The 1834 reprint adds the Cyphral Distich and a dated Postscript; see the separate collation report.)</td></tr>
+</table></div>
+
+<h3>How much of the book is about the language?</h3>
+<div class="card chart" id="chart"><div class="tip" id="tip"></div></div>
+<p class="note">Word counts from the 1834 text, about 57,500 words in total. Book 1 is the only part concerned with the language, and even within it the "sixty-six advantages" take up only about 3,100 words, roughly 5% of the book.</p>
+
+<h2>Language, or a means to an end?</h2>
+<p>The language is real as an idea, but the book is a sales pitch. Urquhart does lay out a coherent theory in Book 1. Words should be classified the way things are, so that hearing a word tells you what kind of thing it names. All vocabulary grows from 250 root words, arranged like "cities… streets… lanes… houses… stories" with "each room standing for a word" (p. 315). The same idea of a "philosophical" language was being worked on by George Dalgarno (1661) and John Wilkins (1668). But Urquhart never shows a word of it, and he openly treats it as merchandise to be exchanged for his estates.</p>
+
+<blockquote>"…being necessitated… to merchandise it for the redintegrating of an ancient family, it needeth not be thought strange, that in some measure I descend to the fashion of the shop-keepers, who to scrue up the buyer to the higher price, will tell them no better can be had for mony…"<cite>Book 2, art. 53, p. 332</cite></blockquote>
+
+<p>The evidence that the language serves the petition:</p>
+<ul>
+  <li><b>The deal is stated outright.</b> He asks the State to apply a statute of James III so that a debtor's moveable goods are valued before his lands are seized. If that is granted, "I doe promise shortly to display before the world, ware of greater value then ever from the East Indias was brought in ships to Europe" (p. 325).</li>
+  <li><b>The grammar is deliberately withheld.</b> He explains that he has "not as yet subjoyned the Grammar and Lexicon" because things given away too easily are undervalued. He piles up praise "to procure the greater longing" (pp. 332–333). Book 6 closes by making publication depend "totally upon the removal of the often-aforementioned impediments" (p. 391).</li>
+  <li><b>The advertisement ends on appetite, not substance.</b> After 66 claims he says he "might have couched thrice as many more", but these "will suffice to sharpen the longing of the generous Reader" (p. 321).</li>
+  <li><b>The material was recycled.</b> Most of Book 1 had already served as the preface to <i>The Jewel</i> (1652), another plea to the same authorities (1834 editor's note, p. 304). The 1834 editors summarise the "scope and chief end" of both books as winning his release from parole, relief from debts not his own, and restoration of his estates (Introduction, p. xiii).</li>
+  <li><b>Five Books out of six are grievance.</b> Each removes one "block" from the road: creditors, the Kirk, the courts. The book closes with 32 formal demands.</li>
+</ul>
+
+<h2>Literary techniques</h2>
+
+<div class="tech"><h3>1. Sustained irony: the dedication "To No-body"</h3>
+<p>The book opens by thanking "No-body" for kindness after Worcester. When he was "five times plundred, pillaged, pilfred, robbed, and rifled" (p. 299), No-body pitied him, and when the Scots bankers in London turned him away, No-body lent him money. The joke builds to a mock pledge to be No-body's "faithless, implacable, and wicked enemie" and therefore the friend of "every body, upright, true, and honest" (p. 302). In one stroke it accuses his countrymen of abandoning him without naming a single one.</p></div>
+
+<div class="tech"><h3>2. The catalogue and hyperbole</h3>
+<p>The language is sold through a numbered list of 66 "advantages", each grander than the last. It has eleven genders, ten cases, four numbers (including a "redual"), seven moods, four voices and twelve parts of speech. One word of seven syllables can say what other tongues need 95 words for. Every word can be read backwards. A boy of ten can learn it in three months (pp. 315–321). The sheer quantity is the argument, and the claims are so extravagant that modern readers often take the whole book as comic.</p></div>
+
+<div class="tech"><h3>3. Commercial metaphor and shopkeeper's puffery</h3>
+<p>He presents his inventions as goods: East-Indies cargo, diamonds that ignorant buyers pass over for "iron and beads", ambergris passed over for sugar (p. 325). He even names his own method as the shopkeeper's trick of saying "no better can be had for mony" (p. 332). Recasting ideas as goods also sets up his legal argument.</p></div>
+
+<div class="tech"><h3>4. Legal argument and precedent</h3>
+<p>Because his brain's "issues" are "moveables", he argues they should be valued before his lands are seized, under an old Scots statute "which never yet was repealed" (p. 325). Book 3 cites Solon, the Decemvirs, the Twelve Tables, Roman examples and the Hebrew Jubilee to show that every civilisation protects ancient families. Book 5 argues <i>a minori ad majus</i>: if the State grants monopolies to men of no merit, it can surely grant him this.</p></div>
+
+<div class="tech"><h3>5. An architecture of obstacles</h3>
+<p>The six Books are built like a lawyer's brief. Book 1 shows the prize. Each later Book identifies one "block" lying in the road and argues for its removal. The last shows that everyone benefits once the road is clear. Urquhart explains the design himself: he begins "analytically" with the end in view, then switches to the "compositive" method, cause before effect (Book 5 summary, p. 371).</p></div>
+
+<div class="tech"><h3>6. Coined Greek titles and "inkhorn" vocabulary</h3>
+<p>The book's title and all six Book titles are invented Greek compounds. The prose is crowded with Latinate coinages: <i>flagitators</i> (dunning creditors), <i>elucubrations</i>, <i>nixuriencie</i>, <i>foenoratory yoak</i>, <i>Kirkomanetick tyrannie</i>. The ornate vocabulary is itself a display of the linguistic talent he claims, and it is the style that later made him a natural translator of Rabelais.</p></div>
+
+<div class="tech"><h3>7. Self-praise in the third person</h3>
+<p>Each Book's summary describes "the Author" as proceeding "very orderly", "with great perspicacity", and closing the work "very daintily" (pp. 349, 335, 391). Writing about himself as if from outside lets him praise his own work while keeping the polite fiction of an outside commentator.</p></div>
+
+<div class="tech"><h3>8. Marginal notes as a second voice</h3>
+<p>The margins carry a running commentary of Latin maxims against avarice. They also carry sharp personal attacks: beside his complaint about a neighbour charging fifteen per cent interest, a margin names Sir James Fraser, "who burns now with the heat of avarice, and will burn hereafter in the fire of Gehenna" (p. 300). The main text stays courteous while the margin does the cursing.</p></div>
+
+<div class="tech"><h3>9. Personal narrative and pathos</h3>
+<p>Interleaved with the arguments is a vivid life story. It covers his father's honesty and ruin, papers worth "ten thousand crowns" lost at Worcester, and the library he had gathered "out of the gardens of above sixteen several kingdoms", seized by creditors so that "not a book thereof escaped" (pp. 299, 401). These episodes give the abstract demands a sympathetic face.</p></div>
+
+<div class="tech"><h3>10. Strategic digression and apophasis</h3>
+<p>Book 4 opens with the figure he names himself, <i>Apophasis</i>: he says he will not complain about the Kirk taking his rights of church patronage, and so complains (p. 349). It then wanders into fables, ancient religion and folk custom. One example is an old woman accused of witchcraft for charms descended, unknown to her, from Homer, by a Greek teacher who whipped boys for not memorising the same verses (p. 355). The digression is pointed: it shows the Presbyterian ministers as credulous and unjust, and so unfit to stand between him and his rights.</p></div>
+
+<div class="tech"><h3>11. Courting the audience</h3>
+<p>The real audience was the English Commonwealth, which was then suppressing the Kirk. Urquhart praises English "civility" and the "gallantry of the English nation", positions himself as a fellow enemy of Presbyterian rule, and includes a Latin poem addressed to the English Parliament pleading for the house of Cromarty (p. 338). The royalist who fought at Worcester presents himself as the State's natural ally against a common enemy.</p></div>
+
+<div class="tech"><h3>12. Enlisting the reader's self-interest</h3>
+<p>"To the Reader" argues that the reader has as much at stake as the author. Because his estate would only be "a mean to a further end", his books, the reader should "help him forwards… if not for any love to the Author, yet for his owne sake at least" (pp. 410–411).</p></div>
+
+<div class="tech"><h3>13. A chorus of testimonials and numerology</h3>
+<p>The book ends with 32 Proquiritations. Each is a separate demand "signed" by initials (K. F., P. O., N. Wa. …), so that the petition reads as if voiced by a crowd of supporters. The number is justified by an "algebraical hexastick": 32 is two to the fifth power, "ascribed to Wisdom" by the Rabbis and "to Justice" by Pythagoras (p. 412). Even the count of his demands is made into a display of learning.</p></div>
+
+<div class="tech"><h3>14. Verse interludes</h3>
+<p>Latin and English poems fill the ends of Books and close the work (<i>Vade Liber…</i>, p. 411). A caution: the Postscript in the 1834 text says these "interstitiary verses" were written in the Author's absence by a friend acting as Corrector of the press. They may not all be Urquhart's.</p></div>
+
+<h2>What he intended readers to take away</h2>
+<ul>
+  <li><b>Awe at the author's mind.</b> Here is a man who has devised a perfect language, a new trigonometry and "above a hundred other several books" (p. 315). The country loses all of it if he is left in ruin.</li>
+  <li><b>That his ruin is not his fault.</b> His debts were inherited, his father was too honest, and his creditors, ministers and judges acted out of greed and spite.</li>
+  <li><b>That helping him is just and costs nothing.</b> The law is on his side, every age has protected old families, and granting his case sets no dangerous precedent.</li>
+  <li><b>That helping him helps everyone.</b> Book 6 argues that usury and avarice have damaged trade, learning, farming and the gentry, and that his relief is part of a general cure.</li>
+  <li><b>That the reader should become his advocate.</b> The reader's own access to his promised works depends on it.</li>
+</ul>
+<p>Behind the bravado was a concrete goal. When he wrote, Urquhart was a prisoner of war on parole, his estates in the hands of creditors and an English garrison living in his house. The book was his case for release and restitution, dressed in the most dazzling clothes he could find. It did not work. He seems to have died in exile around 1660, and the universal language was never published.</p>
+
+<h2>The two editions</h2>
+<p>The 1834 Maitland Club reprint follows the 1653 text from title page to errata preface. The differences are at the end: the Proquiritations are revised and reordered, and the reprint adds the Cyphral Distich and a dated Postscript. The errata are also silently applied. Those differences do not affect anything said above, and they are documented in the separate report, <i>Logopandecteision_1653_vs_1834_Report.html</i>.</p>
+
+<footer>Based on a reading of the 1834 reprint (transcribed from the Google Books scan) checked against the 1653 microfilm. Section word counts are from the transcription and are approximate. The comparison with Dalgarno and Wilkins is general historical context, not drawn from these two volumes.</footer>
+</div>
+
+<script>
+(function () {
+  const DATA = [
+    ["Front matter & dedication", 1615], ["Book 1: the language", 8756], ["Book 2: creditors", 6416], ["Book 3: distressed heir", 6326],
+    ["Book 4: the Kirk", 9678], ["Book 5: pitiless judges", 9990], ["Book 6: public benefit", 10043], ["To the Reader", 120], ["Proquiritations & ending", 2849]
+  ];
+  const total = DATA.reduce((s, d) => s + d[1], 0);
+  const box = document.getElementById("chart"), tip = document.getElementById("tip");
+  const W = 820, rowH = 30, m = { l: 190, r: 60, t: 6, b: 6 }, H = m.t + m.b + rowH * DATA.length;
+  const max = Math.max(...DATA.map(d => d[1])), iw = W - m.l - m.r;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of Logopandecteision devoted to each part">`;
+  DATA.forEach(([name, w], i) => {
+    const y = m.t + i * rowH, bw = Math.max(2, w / max * iw), bh = 18, by = y + (rowH - bh) / 2;
+    const lang = i === 1, pct = (100 * w / total).toFixed(1);
+    s += `<text class="lab" x="${m.l - 10}" y="${y + rowH / 2 + 4.5}" text-anchor="end" ${lang ? 'style="font-weight:600;fill:var(--ink)"' : ""}>${name}</text>`;
+    s += `<path d="M${m.l},${by} H${m.l + bw - 4} q4,0 4,4 V${by + bh - 4} q0,4 -4,4 H${m.l} Z" fill="${lang ? "var(--bar)" : "var(--bar-dim)"}"/>`;
+    s += `<text class="val" x="${m.l + bw + 6}" y="${y + rowH / 2 + 4}">${pct}%</text>`;
+    s += `<rect class="hit" data-i="${i}" x="0" y="${y}" width="${W}" height="${rowH}" fill="transparent"/>`;
+  });
+  s += `</svg>`;
+  box.insertAdjacentHTML("afterbegin", s);
+  box.addEventListener("mousemove", e => {
+    const r = e.target.closest ? e.target.closest(".hit") : null;
+    if (!r) { tip.style.opacity = 0; return; }
+    const [name, w] = DATA[+r.dataset.i], bb = box.getBoundingClientRect(), rb = r.getBoundingClientRect();
+    tip.textContent = `${name}: ${w.toLocaleString()} words (${(100 * w / total).toFixed(1)}%)`;
+    const tw = tip.offsetWidth, cx = e.clientX - bb.left;
+    tip.style.left = Math.min(Math.max(cx, tw / 2 + 4), bb.width - tw / 2 - 4) + "px";
+    tip.style.top = (rb.top - bb.top + 4) + "px"; tip.style.opacity = 1;
+  });
+  box.addEventListener("mouseleave", () => tip.style.opacity = 0);
+})();
+</script>
+</body>
+</html>

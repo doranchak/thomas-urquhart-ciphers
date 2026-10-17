@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyphral Distich Decipherment</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --hl: #fbe7a8; --hl-ink: #2a2620;
+  --chip: #efe9da; --chip-hover: #e5dcc5; --ok: #3f7a3a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --hl: #6a5518; --hl-ink: #fff6dc;
+    --chip: #2e2a25; --chip-hover: #3b362f; --ok: #8cc783;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --hl: #6a5518; --hl-ink: #fff6dc;
+  --chip: #2e2a25; --chip-hover: #3b362f; --ok: #8cc783;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 16px 60px; }
+header h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: .02em; font-variant: small-caps; }
+header p { margin: 0; color: var(--muted); max-width: 820px; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 10px; padding: 18px 20px; margin-top: 18px; }
+.card h2 { margin: 0 0 12px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+/* cipher */
+.cline { display: flex; flex-wrap: wrap; align-items: baseline; row-gap: 6px; margin: 4px 0 12px; }
+.cline .lbl, .pline .lbl { width: 100%; font-size: 12px; color: var(--muted); font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.num { cursor: pointer; padding: 2px 5px; border-radius: 5px; background: var(--chip); font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 15px; }
+.grp { white-space: nowrap; }
+.dot { color: var(--muted); padding: 0 1px; font-family: ui-monospace, Menlo, monospace; }
+.num:hover { background: var(--chip-hover); }
+
+/* plaintext */
+.pline { display: flex; flex-wrap: wrap; align-items: baseline; row-gap: 6px; margin: 4px 0 14px; }
+.pword { display: inline-flex; margin-right: 16px; }
+.let { cursor: pointer; display: inline-block; min-width: 1.15em; text-align: center; font-size: 26px; line-height: 1.25;
+  border-radius: 5px; letter-spacing: .02em; }
+.let:hover { background: var(--chip-hover); }
+
+.num.on, .let.on { background: var(--accent); color: var(--bg); }
+.num.pin, .let.pin { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* info bar */
+.info { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: baseline; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 14px; }
+.info b { font-size: 18px; color: var(--accent); font-family: inherit; }
+.info .k { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin-right: 4px; }
+.hint { color: var(--muted); font-size: 14px; font-style: italic; }
+
+/* excerpt */
+.excerpt { position: relative; }
+.ex-head { display: flex; justify-content: flex-start; gap: 4px 18px; flex-wrap: wrap; align-items: baseline; margin-bottom: 8px; }
+.ex-head .t { font-size: 20px; font-variant: small-caps; }
+.ex-head .p { color: var(--muted); font-size: 14px; }
+.ptext { font-size: 17px; line-height: 2.55; }
+.ptext .ln { white-space: nowrap; display: flex; flex-wrap: wrap; align-items: baseline; }
+.ptext .pg { display: block; margin: 6px 0 2px; font-size: 12px; color: var(--muted); letter-spacing: .1em; text-transform: uppercase;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; border-top: 1px dashed var(--rule); line-height: 1.8; }
+.ptext .ln { white-space: normal; display: block; }
+ruby { ruby-position: over; }
+rt { font-size: 10px; color: var(--muted); font-family: ui-monospace, Menlo, monospace; letter-spacing: 0; user-select: none; }
+.w { border-radius: 4px; padding: 1px 1px; }
+.w.sel { background: var(--hl); color: var(--hl-ink); box-shadow: 0 0 0 2px var(--hl); }
+.w.sel .first { color: var(--accent); font-weight: 700; text-decoration: underline 2px; text-underline-offset: 4px; }
+rt.sel { color: var(--accent); font-weight: 700; font-size: 11px; }
+.sig { float: right; margin-left: 20px; color: var(--muted); font-style: italic; }
+.notes { margin-top: 10px; font-size: 14px; color: var(--muted); border-left: 3px solid var(--accent-soft); padding-left: 10px; }
+.notes:empty { display: none; }
+.empty { color: var(--muted); font-style: italic; padding: 30px 0; text-align: center; }
+
+/* table */
+table { border-collapse: collapse; width: 100%; font-size: 14px; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--rule); }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+tbody tr { cursor: pointer; }
+tbody tr:hover, tbody tr.on { background: var(--accent-soft); }
+td.l { font-weight: 700; color: var(--accent); }
+.tables { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 860px) { .tables { grid-template-columns: 1fr; } }
+.tablewrap { overflow-x: auto; }
+.status { color: var(--ok); font-weight: 600; }
+.status.bad { color: var(--accent); }
+details summary { cursor: pointer; color: var(--muted); }
+.method ol { margin: 6px 0 0; padding-left: 22px; }
+.method li { margin: 3px 0; }
+.method { font-size: 15px; }
+footer { margin-top: 26px; color: var(--muted); font-size: 13px; }
+
+/* side-by-side layout */
+.wrap { max-width: 1680px; }
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); gap: 18px; align-items: start; }
+.split .card:first-child { margin-top: 14px; }
+.split .card { margin-top: 12px; padding: 14px 18px; }
+header h1 { font-size: 26px; }
+.pline { margin-bottom: 8px; }
+.right { position: sticky; top: 0; max-height: 100vh; overflow-y: auto; }
+.let { font-size: 22px; }
+.pword { margin-right: 12px; }
+.ptext { font-size: 15px; word-spacing: -0.5px; }
+.let { font-size: 20px; }
+.num { font-size: 14px; padding: 2px 4px; }
+@media (max-width: 1000px) {
+  .split { grid-template-columns: 1fr; }
+  .right { position: static; max-height: none; }
+}
+
+/* animation controls */
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 14px;
+  font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 14px; }
+.controls button { font: inherit; font-weight: 600; padding: 6px 14px; border-radius: 7px; cursor: pointer;
+  border: 1px solid var(--accent); background: var(--accent); color: var(--bg); }
+.controls button#stopBtn { background: transparent; color: var(--accent); }
+.controls button:disabled { opacity: .4; cursor: default; }
+.speed { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.speed input { accent-color: var(--accent); width: 140px; }
+#speedVal { min-width: 3em; color: var(--ink); font-variant-numeric: tabular-nums; }
+.anim-status { color: var(--muted); }
+.grp { position: relative; }
+.ordbadge { position: absolute; bottom: 100%; left: 50%; transform: translate(-50%, -3px); z-index: 5; white-space: nowrap;
+  background: var(--ink); color: var(--bg); font: 600 11px/1.5 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 1px 7px; border-radius: 10px; animation: pop .25s ease-out; pointer-events: none; }
+/* .let.blank { color: transparent; box-shadow: inset 0 -2px 0 var(--rule); } */
+.let.blank { color: transparent; }
+.let.reveal { animation: pop .3s ease-out; }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.ordbadge { animation-name: popb; }
+@keyframes popb { from { transform: translate(-50%, 4px); opacity: 0; } to { transform: translate(-50%, -3px); opacity: 1; } }
+.animating .num, .animating .let, .animating tbody tr { cursor: default; }
+/* signature aligns with the right edge of the longest printed line */
+.ptext { display: inline-block; max-width: 100%; }
+.sig { margin-left: 14px; margin-top: 16px; }
+.cline { row-gap: 19px; }
+.cline .lbl { margin-bottom: 14px; }
+.ordbadge { font-size: 10px; line-height: 1.45; }
+.split .card { padding-top: 12px; padding-bottom: 12px; }
+.pline { row-gap: 2px; }
+.titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 28px; }
+.titlerow .controls { margin-top: 0; }
+header p { font-size: 14px; }
+.let { font-size: 19px; }
+.pword { margin-right: 10px; }
+.info { min-height: 58px; align-content: flex-start; line-height: 22px; }
+.info b { display: inline-block; line-height: 22px; height: 22px; vertical-align: top; }
+.info .pending { visibility: hidden; }
+/* excerpt words: number above word, highlight box with equal padding */
+.ptext { line-height: 1.25; }
+.ptext .ln { margin: 3px 0; }
+.wd { display: inline-block; text-align: center; padding: 4px 4px 3px; margin: 0 -4px; border-radius: 6px; }
+.wn { display: block; font: 10px/1.2 ui-monospace, Menlo, monospace; color: var(--muted); user-select: none; }
+.wd .w { padding: 0; }
+.wd.sel { background: var(--hl); color: var(--hl-ink); position: relative; z-index: 0; }
+.wd.sel .wn { color: var(--accent); font-weight: 700; }
+.wd.sel .first { color: var(--accent); font-weight: 700; text-decoration: underline 2px; text-underline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .ordbadge, .let.reveal { animation: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="titlerow">
+      <h1>The Cyphral Distich</h1>
+    <div class="controls">
+    <button id="animBtn" type="button">▶ Animate</button>
+    <button id="stopBtn" type="button" disabled>■ Stop</button>
+    <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="speedVal">1×</span></label>
+    <span id="animStatus" class="anim-status"></span>
+    </div>
+    </div>
+    <p>Sir Thomas Urquhart, <i>Logopandecteision</i> (1653); <i>Works</i> (Edinburgh, 1834), pp. 412–417. Hover (or click to pin) any cipher number or plaintext letter.</p>
+  </header>
+
+
+
+  <div class="split">
+  <div class="left">
+  <div class="card">
+    <h2>Cipher</h2>
+    <div id="cipher"></div>
+  </div>
+
+  <div class="card">
+    <h2>Plaintext</h2>
+    <div id="plain"></div>
+  </div>
+
+
+  </div>
+  <div class="right">
+  <div class="card">
+    <h2>Selection</h2>
+    <div class="info" id="info"><span class="hint">Nothing selected — hover a number or letter.</span></div>
+  </div>
+  <div class="card excerpt">
+    <h2>Proquiritation excerpt</h2>
+    <div id="excerpt"><div class="empty">The Proquiritation named by the selected number appears here, with its words numbered.</div></div>
+  </div>
+  </div>
+  </div>
+
+  <div class="card method">
+    <h2>Method</h2>
+    Each line of the distich has 32 numbers, one for each of the 32 Proquiritations that precede it.
+    For the <i>i</i>-th number <i>n</i> in a line, go to Proquiritation <i>i</i>, count to its <i>n</i>-th word, and take that word's first letter.
+    <details style="margin-top:8px"><summary>Word-counting conventions used</summary>
+      <ol>
+        <li>Counting starts at the first word after the paragraph number; the closing signature initials (e.g. “K. F.”) are not counted.</li>
+        <li>Words are separated by spaces and em-dashes; punctuation-only tokens (“;”) are not words.</li>
+        <li>Hyphenated compounds count as two words (<i>church-man</i>, <i>parol-breaking</i>, <i>country-men</i>, <i>twelve-month</i>, <i>time-server</i> …); words merely split at a line end (<i>progeni-tors</i>) count as one.</li>
+        <li>The Latin phrase <i>hinc inde</i> (Proquiritation 17) counts as a single word.</li>
+        <li>Line 2, number 24 is read as <b>38</b>, as printed on p. 417 of the scan.</li>
+      </ol>
+    </details>
+    <div style="margin-top:8px" id="status"></div>
+  </div>
+
+  <div class="card">
+    <h2>All 64 positions</h2>
+    <div class="tables" id="tables"></div>
+  </div>
+
+  <footer>Text of the Proquiritations transcribed from the Google Books scan (id eU0JAAAAQAAJ) and proofread against the page images.
+    Hover a number, letter or table row to select it; click to lock (click again or Esc to unlock). ← → step through positions.</footer>
+</div>
+
+<script>
+const PROQ = [{"n": 1, "sig": "K. F.", "pages": [412, 412, 412, 412, 412], "lines": ["Seeing, from the creation of the world it hath pleased the Author to deduce his", "extraction, without baulking since the days of Adam so much as one of his progeni-", "tors on the paternal side—that the said Author may be put in a consistence of protract-", "ing his posterity through as many hereditary successors in a lineal descent, according", "to the contents of the preceding Tractate, is the desire of"]}, {"n": 2, "sig": "P. O.", "pages": [412, 412, 412, 412, 412], "lines": ["Seeing the grant of what is demanded in this Treatise can no way introduce a", "preparative of any dangerous consequence, as hath been evidently shewn in the above", "written introduction—that it may be thought expedient, without any suspicion of", "being troubled upon the like grounds by any other of this Island, to condescend to his", "desires therein, is the hearty wish of"]}, {"n": 3, "sig": "N. Wa.", "pages": [413, 413, 413, 413, 413, 413, 413, 413], "lines": ["Seeing the covenanters, who are at this time accounted the State’s adversaries,", "kept, some three yeers ago, a garison in the Author's house for the space of a twelve-", "month ; and that, for these many yeers past, by several exactions, tolerated plunder-", "ings, and other such like unmerciful dealings, without any just occasion given, his", "rents have been made almost totally unserviceable—that he may now, for his greater", "peace in the future, be exonered of the English garison which is in his house, and,", "after its removal, have himself fully setled in his own, with all maner of ease and", "tranquility, is the humble desire of"]}, {"n": 4, "sig": "B. H.", "pages": [413, 413, 413], "lines": ["That to the overthrow of equity in the person of the Author, the rigour of a", "wrested law be not permitted to become the executioner of the spleen and covetous-", "ness of his implacable adversaries, is the earnest desire of"]}, {"n": 5, "sig": "Yo. Bn.", "pages": [413, 413, 413, 413], "lines": ["That the Shire of Cromartie, which ever from the beginning hath been the re-", "ceptacle of the most harmless inhabitants, be not bestowed on any other then the", "Author, whose predecessors, for uprightness and integrity of carriage, were not, if", "equalled, inferiour to the best of any nation, is the longing desire of"]}, {"n": 6, "sig": "Bu· Ts.", "pages": [413, 413, 413, 413, 413], "lines": ["That the Author being as a clear spark from whence gleameth the greatest part", "of the pure light that is to be seen of any learned invention in that country of Scot-", "land, it be not quenched and quite extinguished by the foul and black water of an", "usurious puddle, drunk up there by too many of the natives almost of all sorts, is the", "humble request of"]}, {"n": 7, "sig": "D. J.", "pages": [413, 413, 413], "lines": ["That they who look meerly to the present time, without any regard of the", "future, be not permitted to deprive him of his means, who for the good of after-ages", "employs his spare hours most vertuously, is the true desire of"]}, {"n": 8, "sig": "E. G.", "pages": [413, 413, 413, 413], "lines": ["That those who, long before the distractions of Scotland, had enslaved them-", "selves to the abominable vice of oppressing others, be not permitted, now that by their", "means that country is brought lowe, to meddle with the estate of him who never in-", "jured any, is the earnest suit of"]}, {"n": 9, "sig": "X. Ya.", "pages": [413, 413, 413, 413, 413], "lines": ["Seeing he is born to the profit of few, who thinketh onely on the people of his", "age ; and to that of fewer, whose thoughts exceed not the reach of his own proper", "interest—that due consideration may be had of the difference betwixt the Author's", "competitors of dark and narrow projects, and his own splendid and ample endeavours,", "comprehensive by appearance of the whole latitude of time, is the strong desire of"]}, {"n": 10, "sig": "Ai. Bs.", "pages": [413, 413, 413], "lines": ["That outlandish nations, where the Author’s fame dwells advantagiously with", "an expansed reputation, will most highly extol the restorers of him to his own, for an", "act of perfect and well-principled generosity, is the confident opinion of"]}, {"n": 11, "sig": "V. Fs.", "pages": [413, 413, 413, 413, 414, 414], "lines": ["Seeing there is none, considering the relations and tyes whereunto the Author", "by nature and duty was bound, can with any shew of reason be accounted more blame-", "less then he—that he have his sequestration taken off, his person no longer detained", "as a prisoner of war, and some competent acknowledgement allowed him for the great", "loss he hath sustained by the rigour of the unmerciful, not to say knavish, subseques-", "trator, is the real desire of"]}, {"n": 12, "sig": "Ei. Z.", "pages": [414, 414, 414, 414, 414], "lines": ["Seeing the Author's treatises are conducible to posterity, for the benefit where-", "of the most splendid states and potentates do usually undergo great hazards and diffi-", "culties—that out of respect to succeeding ages, and hope of their due retribution in", "praises, he may be better rewarded then if he were a present time-server, without con-", "sideration of the future, is the humble suit of"]}, {"n": 13, "sig": "A. S.", "pages": [414, 414, 414, 414], "lines": ["That he whose good name is like to be eternized to following ages, after that", "unto nature he hath paid the due which mortality will require of him, shall not in his", "life-time have his just demands denied by that authority whose representators upon", "equity promise to lay the foundation of an immortal fame, is the hope of"]}, {"n": 14, "sig": "Gh. En.", "pages": [414, 414, 414, 414, 414, 414], "lines": ["That the Author's family being one of the greatest antiquity in Scotland, and by", "an especial providence until this time preserved from that utter subversion intended by", "the iniquity of his covetous and dissembled enemies, should obtain, cæteris paribus, as", "large a measure of protection as any other race in the whole Isle of Britain, and him-", "self favoured with the grant of all that in his foregoing Treatise is demanded by him,", "is the real wish of"]}, {"n": 15, "sig": "Wh. Y.", "pages": [414, 414, 414, 414, 414], "lines": ["Seeing the Author hath been still faithful to his trust, never culpable of parol-", "breaking, but always true in every word and action—that the discretion of the present", "authority will not suffer him to be exposed to the inhumane dealing of those country-", "men of his who for their own ends make no bones of being guilty of greater breaches,", "is the hearty wish of"]}, {"n": 16, "sig": "T. Wi.", "pages": [414, 414, 414, 414, 414], "lines": ["That the power now in being will not permit that to be exposed to sale which", "never hitherto was made vendible in any preceding age, and that the lands and Shire", "of Cromartie, which by none that ever breathed were either bought or sold, should,", "by a peculiar grant paramount, be in the heritable possession of the Author, as neerest", "in line and by descent to the aborigenary owner, is the earnest request of"]}, {"n": 17, "sig": "Wo. Kn.", "pages": [414, 414, 414, 414, 414, 414], "lines": ["The Author having been very often, with an applause hinc inde, conversant", "both abroad and within the four seas, and sometimes for several months together, with-", "out the variety of any other company, with many choice English gentlemen—that by", "any supreme authority of that nation he should be singled out to suffer as much as the", "most inveterate disaffecters, out of a national antipathy, of both their rule and country-", "men, is not the expectation of"]}, {"n": 18, "sig": "C. W.", "pages": [414, 414, 414, 414], "lines": ["That the reasons deduced by the Author in the above written Treatise, why he", "should not be made liable to any other debt then that of his own contracting, may be", "so relished by [those] in whose power it is to make them effectual, as that thereby he", "may be forthwith exonered of any other burthen, is the earnest wish of"]}, {"n": 19, "sig": "M. Gs.", "pages": [414, 414, 414, 415, 415, 415], "lines": ["Seeing the Author’s unwillingness to pin his faith implicitly to the sleeve of", "the ministery, or to the single backless tenets in Ecclesiasticis of any church-man", "whatsoever, did exclude him from military charges in their covenanting armies ; and", "that therefore, having at no time been under their banner, he by all appearance should", "be looked upon with the more amicable eye by those who did reduce their unlimited", "power, is the humble opinion of"]}, {"n": 20, "sig": "L. Ch.", "pages": [415, 415, 415, 415, 415], "lines": ["There being none in Scotland less covetous then he, nor more averse from the", "excessive love of money—that it may please those, in whom the power of protection is,", "so to protect him, as that he be not made a prey to the most avaritious men of any,", "and such as respect silver and gold beyond whatever else is most precious in the world,", "is the request of"]}, {"n": 21, "sig": "V. Ye.", "pages": [415, 415, 415, 415], "lines": ["That the Author's aversness from acknowledging an ecclesiastical soveraignty", "above the lawful supreme authority in civilibus, be not a motive to deal more rigorous-", "ly with him then with those time-servers who turn tail to every government, without", "bearing affection to any, is the suit of"]}, {"n": 22, "sig": "Q. O.", "pages": [415, 415, 415, 415, 415, 415], "lines": ["There being very few gentlemen in his condition, who to the press so freely", "adventure their names on subjects of any elaboured strain—that the Author's thus fa-", "vouring this Island with elucubrations beyond the reach of his competitors, be not met", "for that his publike service with such a permissive attolerance or connivence from the", "State, as might hurry upon him most grievous detriments by his own country-men in", "his private fortunes, is the cordial desire of"]}, {"n": 23, "sig": "Du. Th.", "pages": [415, 415, 415, 415, 415, 415, 415], "lines": ["That the exemplary civility of the Author, for being apt to have influence on", "the mindes of the rudest of his kindred and neighbours, even unto the remotest hills", "of Scotland, may be of efficacy to perswade such amicable spirits at the helm of pub-", "like affairs, as would heartily endeavour the bringing of the two nations into as strict", "an union and neer conformity in laws, liberties, priviledges, customs, maners, and", "language, as is possible and expedient, to settle and stablish him in the inheritance", "of his predecessors, is the opinion of"]}, {"n": 24, "sig": "Au. Ps.", "pages": [415, 415, 415, 415], "lines": ["That sublime, natural, and moral philosophy, mathematicks, poesie, and many", "other kindes of good literature, should not be any longer supprest by the injustice of", "devouring and insatiable seekers, ignorant of every thing that is not lucrative for the", "bag, is the cordial request of"]}, {"n": 25, "sig": "Gu. Du.", "pages": [415, 415, 415, 415, 415, 415, 415], "lines": ["Seeing many in all the corners almost of this Island live at ease, who enjoy", "more of their neighbour's unlawfully-acquired goods, then formerly they had of their", "own—that the Author, who never yet could, for the importunity of waspish seekers,", "and terrour of a rigorous law, most often in the mouthes, or at the disposure of par-", "tial men, get applied in the most fertile yeer that was, for his own use, the tenth part", "of his rents, should now by a paramount magnificence, reap the fruits of his own", "meanes, without the hazard of such terrible soakers, is the vehement desire of"]}, {"n": 26, "sig": "Yi. Pn.", "pages": [415, 415, 415, 416, 416], "lines": ["Seeing the Author’s designes have been for these many yeers, the same, in", "matter of furthering manufactures and commerce, together with all maner of trading", "and negotiation, with the most industrious of England and other nations—that the", "present authority will not, in favour of those that have obstructed the performance of", "so worthy enterprises, denude him of his just inheritance, is the real hope of"]}, {"n": 27, "sig": "Tm. Ou.", "pages": [416, 416, 416, 416, 416], "lines": ["As the overthrow of vice should be the establishment of vertue—that the reduc-", "ing of his opposers into a more narrow sphere of action then that wherein formerly", "they were wont to bestir themselves, should make the Author to be reseated in the in-", "heritance of his ancestors, by those who hitherto have professed the subdument of irre-", "gular spirits, is the confident expectation of"]}, {"n": 28, "sig": "R. Yu.", "pages": [416, 416, 416, 416], "lines": ["That the vexation uncessantly for these ten yeers past, sustained by the author", "from men of unsatisfiable appetites, in matter of worldly means, may not, as formerly,", "to the great hinderance of divulging treatises conducible to posterity, be any longer", "an impediment unto him, is the cordial wish of"]}, {"n": 29, "sig": "Gn. We.", "pages": [416, 416, 416, 416, 416, 416], "lines": ["As the love of goodness more then money, deserveth a larger influence of", "grace—so, that the Author's affection to the equitable customs and innate civility of the", "English nation, being of a more generous temper then that sullen and selfish disposi-", "tion in many others, which doth no longer relish their conversation then it is found", "apt to shore up the advantage of some pecuniary interest, may be regarded with an", "eye of greater favour, is the hearty request of"]}, {"n": 30, "sig": "Tu. J.", "pages": [416, 416, 416, 416, 416, 416, 416, 416, 416], "lines": ["Seeing there are many gentlemen of considerable estates, who, though actually", "in charge against the English, as pretended opposers of Presbytery, did either enrich", "themselves, or by their levies and quarterings in the Kirk’s service, received great", "profits, to the no small damage of the country, do nevertheless, and that justly too,", "enjoy their means at this time, which good fortune notwithstanding in them I wish no", "man to envie, with as much tranquillity as before—that the Author, who never yet", "had any benefit to the prejudice of another, be placed, if not in a better, at least, ac-", "cording to the rules of distributive justice, in an equal condition with any of those, is", "the real expectation of"]}, {"n": 31, "sig": "Wu. Fn.", "pages": [416, 416, 416, 416], "lines": ["That a plenary grant of the Author’s demands, after the manner above specified", "in this noble Tractate of his Introduction, will prove a great encouragement to good", "spirits, and hinderance to none in the prosecuting of vertuous endeavours, is the sted-", "fast and firm opinion of"]}, {"n": 32, "sig": "Tn. Vs.", "pages": [416, 416, 416, 416], "lines": ["That this is the unanimous desire, wish, request, suit, opinion, hope, and ex-", "pectation of all the good persons of either sexe, with whom of any nation, in whatever", "country, whether at home or abroad, the Author hath been formerly acquainted, is", "duely testified and affirmed by"]}];
+const CIPHER = [
+  [5,3,27,38,32,14,21,8,66,8,70,39,5,9,12,18,2,3,56,5,1,7,3,2,13,19,3,25,9,3,16,6],
+  [25,15,13,6,11,20,5,1,2,12,1,20,20,49,20,20,35,33,4,6,8,35,5,38,5,5,18,10,3,11,32,42]
+];
+const EXPECTED = ["O GOD UPHOLD KING CHARLS THE SECOND AND", "MAKE HIM THE SUPREME RULER OF THIS LAND"];
+const COMPOUND_BREAKS = new Set(["twelve-month", "parol-breaking", "country-men"]);
+const UNITS = [["hinc", "inde"]];
+
+/* ---------- tokenizer ---------- */
+const hasLetter = s => /[A-Za-zÀ-ɏ]/.test(s);
+const bare = s => s.toLowerCase().replace(/[^a-zæ\-]/g, "");
+
+function tokenize(item) {
+  // lines -> pieces {text, word (index or -1), kind}; words -> [{frags:[], notes:[]}]
+  const words = [];
+  const lines = [];
+  let pending = null;          // word continued from previous line (line-end hyphenation)
+  let lastWordText = null, lastWordIdx = -1;
+  item.lines.forEach((line, li) => {
+    const parts = line.split(/(\s+|—|-)/).filter(p => p !== "");
+    const pieces = [];
+    parts.forEach((p, pi) => {
+      if (p === "-" || p === "—" || /^\s+$/.test(p) || !hasLetter(p)) {
+        pieces.push({ text: p, word: -1 });
+        return;
+      }
+      let idx;
+      if (pending !== null && pieces.every(x => x.word === -1)) {
+        idx = pending; pending = null;
+      } else if (lastWordIdx >= 0 && UNITS.some(([a, b]) => bare(lastWordText) === a && bare(p) === b)) {
+        idx = lastWordIdx;
+        words[idx].notes.push("unit");
+      } else {
+        idx = words.length;
+        words.push({ frags: [], notes: [], line: li });
+      }
+      words[idx].frags.push(words[idx].notes.includes("unit") && words[idx].frags.length ? " " + p : p);
+      // mid-line hyphen compound?
+      const prev = pieces[pieces.length - 1];
+      if (prev && prev.text === "-" && idx === words.length - 1 && words.length > 1) words[idx].notes.push("compound");
+      pieces.push({ text: p, word: idx });
+      lastWordText = p; lastWordIdx = idx;
+    });
+    // line-end hyphen: decide whether it joins with the next line's first fragment
+    const last = pieces[pieces.length - 1];
+    if (last && last.text === "-" && li + 1 < item.lines.length) {
+      const w = pieces[pieces.length - 2].word;
+      const nextFirst = item.lines[li + 1].split(/[\s—-]+/).find(hasLetter) || "";
+      const joined = bare(words[w].frags.join("")) + "-" + bare(nextFirst);
+      if (COMPOUND_BREAKS.has(joined)) {
+        words[w].compoundBreak = true;   // next fragment starts a new word
+      } else {
+        pending = w;
+      }
+    }
+    lines.push(pieces);
+  });
+  // mark words that start right after a line-end compound break
+  words.forEach((w, i) => { if (i > 0 && words[i - 1].compoundBreak) w.notes.push("compound"); });
+  words.forEach(w => {
+    w.text = w.frags.join("");
+    w.first = (w.text.match(/[A-Za-zÀ-ɏ]/) || ["?"])[0];
+  });
+  return { words, lines };
+}
+
+const TOK = PROQ.map(tokenize);
+
+/* ---------- decode ---------- */
+const CELLS = [];   // {line, pos, n, letter, word}
+CIPHER.forEach((row, L) => row.forEach((n, i) => {
+  const w = TOK[i].words[n - 1];
+  CELLS.push({ line: L, pos: i, n, word: w ? w.text : "?", letter: w ? w.first.toUpperCase() : "?" });
+}));
+const cell = (L, i) => CELLS[L * 32 + i];
+
+/* ---------- render cipher & plaintext ---------- */
+const $ = id => document.getElementById(id);
+function renderCipher() {
+  const box = $("cipher");
+  CIPHER.forEach((row, L) => {
+    const d = document.createElement("div");
+    d.className = "cline";
+    d.innerHTML = `<div class="lbl">Line ${L + 1}</div>`;
+    row.forEach((n, i) => {
+      const g = document.createElement("span"); g.className = "grp";
+      const s = document.createElement("span");
+      s.className = "num"; s.textContent = n; s.dataset.l = L; s.dataset.i = i;
+      s.title = `Line ${L + 1}, position ${i + 1} → Proquiritation ${i + 1}`;
+      g.appendChild(s);
+      const dot = document.createElement("span"); dot.className = "dot"; dot.textContent = ".";
+      g.appendChild(dot);
+      d.appendChild(g);
+    });
+    box.appendChild(d);
+  });
+}
+function renderPlain() {
+  const box = $("plain");
+  let ok = 0;
+  CIPHER.forEach((row, L) => {
+    const d = document.createElement("div");
+    d.className = "pline";
+    d.innerHTML = `<div class="lbl">Line ${L + 1}</div>`;
+    const words = EXPECTED[L].split(" ");
+    let i = 0;
+    words.forEach(w => {
+      const ws = document.createElement("span"); ws.className = "pword";
+      for (let k = 0; k < w.length; k++, i++) {
+        const c = cell(L, i);
+        if (c.letter === w[k]) ok++;
+        const s = document.createElement("span");
+        s.className = "let"; s.textContent = c.letter; s.dataset.l = L; s.dataset.i = i;
+        ws.appendChild(s);
+      }
+      d.appendChild(ws);
+    });
+    box.appendChild(d);
+  });
+  const st = $("status");
+  st.innerHTML = ok === 64
+    ? `<span class="status">✓ All 64 letters decoded from the text match the reported plaintext.</span>`
+    : `<span class="status bad">${ok}/64 letters match the reported plaintext.</span>`;
+}
+function renderTables() {
+  const box = $("tables");
+  CIPHER.forEach((row, L) => {
+    const wrap = document.createElement("div"); wrap.className = "tablewrap";
+    let h = `<table><thead><tr><th>Line ${L + 1} pos.</th><th>No.</th><th>Word</th><th>Letter</th></tr></thead><tbody>`;
+    row.forEach((n, i) => {
+      const c = cell(L, i);
+      h += `<tr data-l="${L}" data-i="${i}"><td>${i + 1}</td><td class="mono">${n}</td><td>${esc(c.word)}</td><td class="l">${c.letter}</td></tr>`;
+    });
+    wrap.innerHTML = h + "</tbody></table>";
+    box.appendChild(wrap);
+  });
+}
+const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* ---------- excerpt ---------- */
+function renderExcerpt(L, i, stage = 9) {
+  const item = PROQ[i], tok = TOK[i], n = CIPHER[L][i];
+  const pages = [...new Set(item.pages)];
+  let h = `<div class="ex-head"><span class="t">Proquiritation ${item.n}</span>
+    <span class="p">${pages.length > 1 ? "pp. " + pages.join("–") : "p. " + pages[0]} · ${tok.words.length} words${stage >= 4 ? " · selected word " + n : ""}</span></div><div class="ptext">`;
+  let prevPage = item.pages[0];
+  const started = new Set();
+  tok.lines.forEach((pieces, li) => {
+    if (item.pages[li] !== prevPage) { h += `<span class="pg">page ${item.pages[li]}</span>`; prevPage = item.pages[li]; }
+    h += `<span class="ln">`;
+    if (li === 0) h += `<span style="color:var(--muted)">${item.n}. </span>`;
+    pieces.forEach(p => {
+      if (p.word < 0) { h += esc(p.text); return; }
+      const sel = stage >= 4 && p.word === n - 1;
+      const isFirst = !started.has(p.word);
+      let inner = esc(p.text);
+      if (sel && stage >= 5 && isFirst) {
+        const m = p.text.match(/^([^A-Za-zÀ-ɏ]*)([A-Za-zÀ-ɏ])(.*)$/);
+        if (m) inner = `${esc(m[1])}<span class="first">${m[2]}</span>${esc(m[3])}`;
+      }
+      // number stacked above the word in one box, so a highlight covers both
+      started.add(p.word);
+      h += `<span class="wd${sel ? " sel" : ""}"${sel && isFirst ? ' id="selword"' : ""}>` +
+           `<span class="wn">${isFirst ? p.word + 1 : "&nbsp;"}</span><span class="w">${inner}</span></span>`;
+    });
+    if (li === tok.lines.length - 1) h += `<span class="sig">${esc(item.sig)}</span>`;
+    h += `</span>`;
+  });
+  h += `</div>`;
+  // notes on counting conventions that affect this position
+  const notes = [];
+  tok.words.slice(0, n).forEach((w, k) => {
+    if (w.notes.includes("compound")) notes.push(`“${esc(tok.words[k - 1].text)}-${esc(w.text)}” counted as two words (${k}, ${k + 1})`);
+    if (w.notes.includes("unit")) notes.push(`“${esc(w.text)}” counted as one word (${k + 1})`);
+  });
+  if (L === 1 && i === 23) notes.push("Number read as 38, as printed on p. 417 (not 33)");
+  if (stage < 4) notes.length = 0;
+  h += `<div class="notes">${notes.length ? "Counting notes before word " + n + ": " + notes.join("; ") + "." : ""}</div>`;
+  $("excerpt").innerHTML = h;
+  const w = $("selword"), r = document.querySelector(".right");
+  if (w && r && getComputedStyle(r).position === "sticky") {
+    const wr = w.getBoundingClientRect(), rr = r.getBoundingClientRect();
+    if (wr.top < rr.top || wr.bottom > rr.bottom) r.scrollTop += wr.top - rr.top - rr.height / 2;
+  }
+}
+
+/* ---------- selection ---------- */
+let pinned = null, current = null;
+function select(L, i) {
+  current = (L == null) ? null : [L, i];
+  document.querySelectorAll(".on").forEach(e => e.classList.remove("on"));
+  if (!current) {
+    $("info").innerHTML = `<span class="hint">Nothing selected — hover a number or letter; click to lock the selection.</span>`;
+    $("excerpt").innerHTML = emptyExcerpt;
+    return;
+  }
+  document.querySelectorAll(`[data-l="${L}"][data-i="${i}"]`).forEach(e => e.classList.add("on"));
+  showInfo(L, i);
+  renderExcerpt(L, i);
+}
+function showInfo(L, i, stage = 9) {
+  const c = cell(L, i), item = PROQ[i];
+  const pages = [...new Set(item.pages)];
+  // every field is always laid out (hidden until its stage) so the panel never changes size
+  const v = (st, html) => `<span class="${stage >= st ? "" : "pending"}">${html}</span>`;
+  $("info").innerHTML = `<span><span class="k">Line</span>${L + 1}</span>
+    <span><span class="k">Number</span><span class="mono">${c.n}</span></span>
+    <span><span class="k">Position</span>${v(2, ordinal(i + 1) + " of 32")}</span>
+    <span><span class="k">Proquiritation</span>${v(2, `${i + 1} <span style="color:var(--muted)">(${pages.length > 1 ? "pp. " + pages.join("–") : "p. " + pages[0]}, signed ${esc(item.sig)})</span>`)}</span>
+    <span><span class="k">Word</span>${v(4, `${c.n}: “${esc(c.word)}”`)}</span>
+    <span><span class="k">Letter</span>${v(6, `<b>${c.letter}</b>`)}</span>`;
+}
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+function setPin(L, i) {
+  document.querySelectorAll(".pin").forEach(e => e.classList.remove("pin"));
+  if (L == null || (pinned && pinned[0] === L && pinned[1] === i)) { pinned = null; return; }
+  pinned = [L, i];
+  document.querySelectorAll(`.num[data-l="${L}"][data-i="${i}"], .let[data-l="${L}"][data-i="${i}"]`).forEach(e => e.classList.add("pin"));
+}
+function targetOf(e) { const t = e.target.closest("[data-l]"); return t ? [+t.dataset.l, +t.dataset.i] : null; }
+// hovering selects; the selection persists until another symbol is hovered (a pin locks it)
+document.addEventListener("mouseover", e => { if (anim.running || pinned) return; const t = targetOf(e); if (t) select(...t); });
+document.addEventListener("click", e => { if (anim.running) return; const t = targetOf(e); if (t) { setPin(...t); select(...t); } });
+document.addEventListener("keydown", e => {
+  if (anim.running) return;
+  if (e.key === "Escape") { setPin(null); return; }
+  if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+  const cur = pinned || current || [0, -1];
+  let k = cur[0] * 32 + cur[1] + (e.key === "ArrowRight" ? 1 : -1);
+  k = (k + 64) % 64;
+  const L = Math.floor(k / 32), i = k % 32;
+  pinned = null; setPin(L, i); select(L, i);
+  e.preventDefault();
+});
+
+/* ---------- animation ---------- */
+const anim = { running: false, paused: false, stop: false };
+const BASE_DELAY = 700;               // ms per step at 1×
+const speedEl = $("speed");
+speedEl.addEventListener("input", () => { $("speedVal").textContent = (+speedEl.value) + "×"; });
+function wait(mult = 1) {
+  return new Promise(res => {
+    let t = 0;
+    const tick = () => {
+      if (anim.stop) return res();
+      if (!anim.paused) t += 25;
+      if (t >= BASE_DELAY * mult / +speedEl.value) return res();
+      setTimeout(tick, 25);
+    };
+    setTimeout(tick, 25);
+  });
+}
+function updateButtons() {
+  $("animBtn").textContent = !anim.running ? "▶ Animate" : anim.paused ? "▶ Resume" : "❚❚ Pause";
+  $("stopBtn").disabled = !anim.running;
+  document.body.classList.toggle("animating", anim.running);
+}
+const clearMarks = () => {
+  document.querySelectorAll(".on").forEach(e => e.classList.remove("on"));
+  document.querySelectorAll(".ordbadge").forEach(e => e.remove());
+};
+var emptyExcerpt = `<div class="empty">The Proquiritation named by the selected number appears here, with its words numbered.</div>`;
+async function animate() {
+  anim.running = true; anim.paused = false; anim.stop = false; updateButtons();
+  setPin(null); clearMarks(); current = null;
+  document.querySelectorAll(".let").forEach(e => { e.classList.add("blank"); e.classList.remove("reveal"); });
+  $("excerpt").innerHTML = emptyExcerpt;
+  $("info").innerHTML = `<span class="hint">Animating…</span>`;
+  await wait(1);
+  for (let k = 0; k < 64 && !anim.stop; k++) {
+    const L = Math.floor(k / 32), i = k % 32;
+    const num = document.querySelector(`.num[data-l="${L}"][data-i="${i}"]`);
+    const let_ = document.querySelector(`.let[data-l="${L}"][data-i="${i}"]`);
+    $("animStatus").textContent = `Line ${L + 1}, number ${i + 1} of 32`;
+    const steps = [
+      () => { clearMarks(); $("excerpt").innerHTML = emptyExcerpt; num.classList.add("on"); showInfo(L, i, 1); },                  // 1 highlight number
+      () => { const b = document.createElement("span"); b.className = "ordbadge";           // 2 ordinal
+              b.textContent = ordinal(i + 1); num.parentElement.appendChild(b); showInfo(L, i, 2); },
+      () => { renderExcerpt(L, i, 3); showInfo(L, i, 3); },                                   // 3 load excerpt
+      () => { renderExcerpt(L, i, 4); showInfo(L, i, 4); },                                   // 4 highlight nth word
+      () => { renderExcerpt(L, i, 5); },                                                      // 5 mark first letter
+      () => { let_.classList.remove("blank"); let_.classList.add("on", "reveal"); showInfo(L, i, 6); } // 6 plaintext
+    ];
+    for (const step of steps) {
+      if (anim.stop) break;
+      step();
+      await wait(1);
+    }
+    if (!anim.stop) await wait(0.6);
+  }
+  const stopped = anim.stop;
+  anim.running = false; anim.paused = false; anim.stop = false; updateButtons();
+  document.querySelectorAll(".let").forEach(e => e.classList.remove("blank"));
+  document.querySelectorAll(".ordbadge").forEach(e => e.remove());
+  $("animStatus").textContent = stopped ? "Stopped." : "Done — all 64 letters recovered.";
+  clearMarks(); select(null);
+}
+$("animBtn").addEventListener("click", () => {
+  if (!anim.running) { animate(); return; }
+  anim.paused = !anim.paused; updateButtons();
+});
+$("stopBtn").addEventListener("click", () => { anim.stop = true; anim.paused = false; });
+
+renderCipher(); renderPlain(); renderTables();
+// start with nothing selected or pinned; pinning happens only on an explicit click / arrow key
+</script>
+</body>
+</html>

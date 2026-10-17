@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Urquhart's Number 32</title>
+<style>
+:root { --bg:#17140f; --ink:#ece6da; --dim:#8a8173; --accent:#e9945f; --hl:rgba(251,222,140,.22); --hl-edge:#f0c96a; --panel:#241f18; --blue:#7fb3e6; --green:#8cc783; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:#000; overflow:hidden; }
+#frame { position:absolute; width:1920px; height:1080px; transform-origin:0 0; background:var(--bg); overflow:hidden; color:var(--ink);
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; }
+#head { position:absolute; left:140px; top:56px; right:140px; display:flex; justify-content:space-between; align-items:baseline; }
+#head h1 { margin:0; font-size:38px; letter-spacing:.3em; font-weight:400; }
+#head span { font-size:26px; color:var(--dim); }
+#prose { position:absolute; left:140px; top:140px; width:1640px; font-size:36px; line-height:1.55; text-indent:2em; }
+#poem { position:absolute; left:140px; top:470px; font-size:42px; line-height:1.7; }
+#poem .ln { display:block; width:fit-content; }
+#poem .ind { margin-left:70px; }
+.playing #prose, .playing #poem { color:var(--dim); transition:color .4s; }
+.t { border-radius:8px; padding:2px 4px; margin:0 -4px; transition:background .3s, color .3s, box-shadow .3s; }
+.t.on { background:var(--hl); color:#fff6dc; box-shadow:0 0 0 2px var(--hl-edge); }
+#caption { position:absolute; left:140px; right:140px; bottom:44px; height:150px; display:flex; align-items:center; justify-content:center; text-align:center;
+  font:500 33px/1.4 -apple-system,"Helvetica Neue",Arial,sans-serif; color:#f4eee2; background:rgba(0,0,0,.35); border-radius:16px; padding:0 40px; opacity:0; transition:opacity .3s; }
+#caption.show { opacity:1; }
+.pop { position:absolute; width:600px; background:var(--panel); border:2px solid var(--hl-edge); border-radius:18px; padding:20px 26px; opacity:0; transform:scale(.94);
+  transition:opacity .35s, transform .35s; pointer-events:none; font-family:-apple-system,"Helvetica Neue",Arial,sans-serif; }
+.pop.show { opacity:1; transform:none; }
+.pop h3 { margin:0 0 12px; font-size:24px; font-weight:600; color:var(--hl-edge); letter-spacing:.02em; }
+.link { position:absolute; height:3px; background:var(--hl-edge); opacity:0; transition:opacity .35s; }
+.link.show { opacity:.8; }
+.r { opacity:0; transform:translateY(8px); transition:opacity .45s, transform .45s; }
+.r.show { opacity:1; transform:none; }
+.eq { font:600 44px/1.2 "Iowan Old Style",Palatino,Georgia,serif; margin:6px 0; white-space:nowrap; }
+.eq sup { font-size:.6em; }
+.eq .res { color:var(--accent); font-weight:900; }
+.row { display:flex; gap:22px; align-items:flex-end; }
+.cell { text-align:center; font-size:22px; color:var(--dim); }
+.cell .lab { margin-top:8px; font-size:22px; color:var(--ink); }
+.cell .lab b { color:var(--accent); font-size:28px; }
+.op { font:700 52px/1 Georgia,serif; color:var(--accent); align-self:center; padding-bottom:36px; }
+.sq { fill:var(--blue); } .sq2 { fill:var(--green); } .cu { fill:var(--blue); stroke:#17140f; stroke-width:1; } .cu.sq2 { fill:var(--green); }
+#bar { position:fixed; left:0; right:0; bottom:0; height:52px; z-index:10; background:#111; color:#ddd; font:13px/1.2 -apple-system,Helvetica,Arial,sans-serif;
+  display:flex; align-items:center; gap:18px; padding:0 14px; border-top:1px solid #333; }
+#bar.hidden { display:none; }
+#bar button { padding:4px 14px; cursor:pointer; }
+#bar .ctl { display:flex; align-items:center; gap:8px; white-space:nowrap; }
+#bar input[type=range] { width:160px; }
+#bar .v { display:inline-block; min-width:40px; color:#aaa; }
+#bar small { color:#777; margin-left:auto; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <div id="head"><h1>PROQUIRITATIONS.</h1><span>Works of Sir Thomas Urquhart &middot; p. 412</span></div>
+  <div id="prose"></div>
+  <div id="poem"></div>
+  <div id="caption"></div>
+</div>
+<div id="bar">
+  <button id="play">&#9654; Start</button><button id="stop">Stop</button>
+  <div class="ctl">Speed <input type="range" id="speed" min="0.5" max="2.5" step="0.05"><span class="v" id="vs"></span></div>
+  <label class="ctl"><input type="checkbox" id="cap" checked> Captions</label>
+  <small>H: hide bar &middot; Space: start/stop</small>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const frame = $("frame");
+
+/* ---------- text (page 412) ---------- */
+$("prose").innerHTML =
+  `Seeing the scope and chief end of this foregoing Tractate is to perswade the State out of their wisdom to condescend to the just demands of the Author, ` +
+  `<span class="t" id="t-number">there can no number like that of two and thirty</span>, ` +
+  `<span class="t" id="t-rabbi">which by the Rabbies of old was ascribed to Wisdom</span>, ` +
+  `<span class="t" id="t-pyth">and by Pythagoras to Justice</span>, ` +
+  `be pitched upon so apposite for comprehending and terminating the sum of these subsequent Proquiritations, according to the tenour of this algebraical hexastick:`;
+$("poem").innerHTML = `
+  <span class="ln" id="l1">Of Postulatas <span class="t" id="t-sursolid">a sursolid</span>, whose</span>
+  <span class="ln" id="l2">Content doth <span class="t" id="t-twice">twice that square of squares</span> inclose,</span>
+  <span class="ln" id="l3">Which is <span class="t" id="t-cube">the double of the cube of two</span>,</span>
+  <span class="ln" id="l4">Is here display’d for th’ Author’s sake, to shew</span>
+  <span class="ln ind" id="l5">How that square dealing will him best become,</span>
+  <span class="ln ind" id="l6">Whereby he gets his own in solidum.</span>`;
+
+/* ---------- popup illustrations ---------- */
+function grid(c, r, cls, size = 16, gap = 5, ox = 0, oy = 0) {
+  let s = "";
+  for (let y = 0; y < r; y++) for (let x = 0; x < c; x++)
+    s += `<rect class="${cls}" x="${ox + x * (size + gap)}" y="${oy + y * (size + gap)}" width="${size}" height="${size}" rx="3"/>`;
+  return s;
+}
+const gw = (c, size = 16, gap = 5) => c * (size + gap) - gap;
+function gridSvg(c, r, cls, size = 16, gap = 5) {
+  return `<svg width="${gw(c, size, gap)}" height="${gw(r, size, gap)}">${grid(c, r, cls, size, gap)}</svg>`;
+}
+function cubeSvg(cls) {            // 2x2x2 = 8 small cubes, shown as two 2x2 layers stacked in depth
+  const s = 24, g = 6, dx = 66, dy = -34, w = gw(2, s, g);
+  const out = `<line x1="6" y1="${40}" x2="${6 + dx}" y2="${40 + dy}" stroke="#8a8173" stroke-dasharray="3 4"/>` +
+    `<line x1="${6 + w}" y1="${40 + w}" x2="${6 + w + dx}" y2="${40 + w + dy}" stroke="#8a8173" stroke-dasharray="3 4"/>` +
+    grid(2, 2, "cu " + cls, s, g, 6 + dx, 40 + dy) + grid(2, 2, "cu " + cls, s, g, 6, 40);
+  return `<svg width="${w + dx + 12}" height="${w + 46}">${out}</svg>`;
+}
+const POP = {
+  sursolid: {
+    title: "A sursolid = a fifth power",
+    html: `
+      <div class="eq r" data-r="0">2 × 2 × 2 × 2 × 2</div>
+      <div class="eq r" data-r="1">= 2<sup>5</sup> = <span class="res">32</span></div>
+      <div class="r" data-r="2" style="margin-top:6px">${gridSvg(8, 4, "sq", 20, 6)}</div>
+      <div class="r" data-r="2" style="margin-top:8px;color:var(--dim);font-size:20px">32 squares: five 2s multiplied together</div>`,
+    reveals: [[.35, 0], [.55, 1], [.75, 2]]
+  },
+  twice: {
+    title: "Twice that square of squares",
+    html: `<div class="row">
+      <div class="cell r" data-r="0">${gridSvg(2, 2, "sq", 26, 7)}<div class="lab">2² = <b>4</b></div></div>
+      <div class="op r" data-r="1">→</div>
+      <div class="cell r" data-r="1">${gridSvg(4, 4, "sq", 14, 4)}<div class="lab">4² = <b>16</b></div></div>
+      <div class="op r" data-r="2">×2</div>
+      <div class="cell r" data-r="2"><div style="display:flex;gap:10px">${gridSvg(4, 4, "sq", 14, 4)}${gridSvg(4, 4, "sq2", 14, 4)}</div><div class="lab">2 × 16 = <b>32</b></div></div>
+    </div>`,
+    reveals: [[.18, 0], [.38, 1], [.65, 2]]
+  },
+  cube: {
+    title: "The double of the cube of two",
+    html: `<div class="row">
+      <div class="cell r" data-r="0">${cubeSvg("")}<div class="lab">2 × 2 × 2 = <b>8</b></div></div>
+      <div class="op r" data-r="1">×2</div>
+      <div class="cell r" data-r="1"><div style="display:flex;gap:6px">${cubeSvg("")}${cubeSvg("sq2")}</div><div class="lab">2 × 8 = <b>16</b></div></div>
+    </div>
+    <div class="r eq" data-r="2" style="font-size:30px;margin-top:12px">16 = 2 × 2<sup>3</sup> &nbsp;→&nbsp; 2 × 16 = <span class="res">32</span></div>`,
+    reveals: [[.15, 0], [.55, 1], [.8, 2]]
+  }
+};
+
+/* ---------- script (words/narration) ---------- */
+const words = s => s.trim().split(/\s+/).length;
+const STEPS = [
+  { t: ["t-number"],
+    text: "Urquhart’s introduction there emphasizes the importance of the number 32, saying there is no better number for conveying his demands." },
+  { t: ["t-rabbi"],
+    text: "He wrote that the “Rabbis of old” associated 32 with Wisdom." },
+  { t: ["t-pyth"],
+    text: "And that Pythagoras associated it with Justice." },
+  { t: ["t-sursolid"], line: "l1", pop: "sursolid",
+    text: "Urquhart’s poem called 32 a “sursolid” which means 5th power, in this case the fifth power of 2." },
+  { t: ["t-twice"], line: "l2", pop: "twice",
+    text: "It’s “twice that square of squares”. The square being 2 squared = 4, so the square of that square is 16. Twice that is 32." },
+  { t: ["t-cube"], line: "l3", pop: "cube",
+    text: "And 16, that square of squares, is “the double of the cube of two”. The cube of 2 is 2 times 2 times 2 equals 8, so double that is 16." }
+];
+STEPS.forEach(s => s.dur = Math.max(2600, words(s.text) / 2.7 * 1000 + 700));   // ms at 1× speed
+
+/* ---------- popups: create + position next to their line ---------- */
+const POPX = 1230;
+function buildPopup(key, lineId) {
+  const p = POP[key];
+  const el = document.createElement("div"); el.className = "pop";
+  el.innerHTML = `<h3>${p.title}</h3>${p.html}`;
+  frame.appendChild(el);
+  const ln = $(lineId);
+  const top0 = ln.offsetTop + ln.offsetHeight / 2;               // poem-relative -> stage coords
+  const cy = $("poem").offsetTop + top0;
+  const h = el.offsetHeight;
+  const top = Math.max(120, Math.min(cy - 70, 880 - h));
+  el.style.left = POPX + "px"; el.style.top = top + "px";
+  const link = document.createElement("div"); link.className = "link";
+  const x0 = 140 + ln.offsetWidth + 20;
+  link.style.left = x0 + "px"; link.style.width = (POPX - x0) + "px"; link.style.top = (cy - 1) + "px";
+  frame.appendChild(link);
+  return { el, link, key };
+}
+let pops = {};
+function buildAll() {
+  Object.values(pops).forEach(p => { p.el.remove(); p.link.remove(); });
+  pops = {};
+  STEPS.filter(s => s.pop).forEach(s => pops[s.pop] = buildPopup(s.pop, s.line));
+}
+
+/* ---------- animation engine ---------- */
+let timers = [], running = false;
+const cfg = { speed: 1 };
+try { Object.assign(cfg, JSON.parse(localStorage.getItem("t32cfg") || "{}")); } catch (e) {}
+function syncSpeed() { $("speed").value = cfg.speed; $("vs").textContent = cfg.speed.toFixed(2) + "×";
+  try { localStorage.setItem("t32cfg", JSON.stringify(cfg)); } catch (e) {} }
+$("speed").oninput = e => { cfg.speed = +e.target.value; syncSpeed(); };
+syncSpeed();
+
+function clearAll() {
+  document.querySelectorAll(".t.on").forEach(e => e.classList.remove("on"));
+  document.querySelectorAll(".pop.show,.link.show,.r.show").forEach(e => e.classList.remove("show"));
+  $("caption").classList.remove("show");
+}
+function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+function stop() {
+  timers.forEach(clearTimeout); timers = []; running = false;
+  frame.classList.remove("playing"); clearAll(); $("play").innerHTML = "&#9654; Start";
+}
+function runStep(i) {
+  if (i >= STEPS.length) { later(stop, 1800 / cfg.speed); return; }
+  const s = STEPS[i], dur = s.dur / cfg.speed;
+  clearAll();
+  s.t.forEach(id => $(id).classList.add("on"));
+  const cap = $("caption"); cap.textContent = s.text;
+  if ($("cap").checked) cap.classList.add("show");
+  if (s.pop) {
+    const p = pops[s.pop];
+    later(() => { p.el.classList.add("show"); p.link.classList.add("show"); }, 250 / cfg.speed);
+    POP[s.pop].reveals.forEach(([f, k]) => later(() =>
+      p.el.querySelectorAll(`[data-r="${k}"]`).forEach(e => e.classList.add("show")), f * dur));
+  }
+  later(() => runStep(i + 1), dur + (s.pop ? 900 : 500) / cfg.speed);
+}
+function start() {
+  stop(); buildAll(); running = true;
+  frame.classList.add("playing"); $("play").innerHTML = "&#8635; Restart";
+  later(() => runStep(0), 500);
+}
+$("play").onclick = start;
+$("stop").onclick = stop;
+$("cap").onchange = () => { if (!$("cap").checked) $("caption").classList.remove("show"); };
+
+/* ---------- layout / keys ---------- */
+function fit() {
+  const bar = $("bar").classList.contains("hidden") ? 0 : 52, h = innerHeight - bar;
+  const k = Math.min(innerWidth / 1920, h / 1080);
+  frame.style.left = (innerWidth - 1920 * k) / 2 + "px"; frame.style.top = (h - 1080 * k) / 2 + "px";
+  frame.style.transform = `scale(${k})`;
+}
+addEventListener("resize", fit); fit();
+addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); running ? stop() : start(); }
+  else if (e.key === "h" || e.key === "H") { $("bar").classList.toggle("hidden"); fit(); }
+});
+</script>
+</body>
+</html>

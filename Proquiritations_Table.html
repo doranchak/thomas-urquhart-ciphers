@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Urquhart's Proquiritations</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --ink2: #4d463c; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --stripe: #faf6ec; --same: #dfeedd; --same-ink: #2a5a24;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --stripe: #282420; --same: #26401f; --same-ink: #cdeec4;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --stripe: #282420; --same: #26401f; --same-ink: #cdeec4;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16.5px/1.6 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+.wrap { max-width: 1440px; margin: 0 auto; padding: 32px 16px 80px; overflow-wrap: break-word; }
+.prose { max-width: 860px; }
+h1 { font-size: 32px; margin: 0 0 4px; font-variant: small-caps; letter-spacing: .02em; line-height: 1.2; }
+h2 { font-size: 22px; margin: 40px 0 10px; font-variant: small-caps; letter-spacing: .02em; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+a { color: var(--accent); }
+.def { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; margin: 16px 0; }
+.def .w { font-size: 22px; font-weight: 600; }
+.def .pos { color: var(--muted); font-style: italic; margin-left: 6px; }
+.def p { margin: 6px 0 0; }
+blockquote { margin: 12px 0; padding: 10px 16px; background: var(--panel); border-left: 3px solid var(--accent); border-radius: 0 6px 6px 0; color: var(--ink2); }
+blockquote cite { display: block; margin-top: 4px; font: 12.5px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--muted); font-style: normal; }
+ul li { margin: 5px 0; }
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 10px; margin: 12px 0; }
+.theme { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 10px 14px; font-size: 15px; }
+.theme b { display: block; font: 600 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--accent); margin-bottom: 2px; }
+.theme span { color: var(--muted); font: 12.5px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+/* table */
+.tablewrap { overflow-x: auto; margin-top: 12px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); }
+table { border-collapse: collapse; width: 100%; min-width: 1100px; }
+th { position: sticky; top: 0; background: var(--panel); z-index: 1; text-align: left; padding: 10px 10px; border-bottom: 2px solid var(--rule);
+  font: 600 12px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+td { padding: 10px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; font-size: 15px; line-height: 1.5; }
+tbody tr:nth-child(even) td { background: var(--stripe); }
+td.n { width: 58px; text-align: center; font: 700 16px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--accent); }
+td.n .moved { color: var(--accent); }
+td.n .same { display: inline-block; background: var(--same); color: var(--same-ink); border-radius: 10px; padding: 0 8px; }
+td.t { width: 30%; }
+td.i { width: 26%; color: var(--ink2); font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 14px; }
+td.i em { font-style: normal; font-weight: 600; color: var(--muted); }
+.sig { font-style: italic; color: var(--muted); white-space: nowrap; margin-left: 4px; }
+.pg { display: block; margin-top: 4px; font: 11.5px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--muted); }
+.note { color: var(--muted); font-size: 14px; }
+@media (max-width: 820px) {
+  table { min-width: 0; }
+  thead { display: none; }
+  table, tbody, tr, td { display: block; width: 100% !important; }
+  tr { border-bottom: 2px solid var(--rule); padding: 8px 0; }
+  td { border: 0; padding: 6px 12px; }
+  td.n { text-align: left; }
+  td::before { content: attr(data-label); display: block; font: 600 11px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  tbody tr:nth-child(even) td { background: transparent; }
+  .tablewrap { overflow-x: visible; }
+  h1 { font-size: 26px; }
+}
+footer { margin-top: 40px; color: var(--muted); font-size: 13.5px; max-width: 860px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="prose">
+<h1>Urquhart's Proquiritations</h1>
+<p class="sub">The closing section of Sir Thomas Urquhart's <i>Logopandecteision</i> (London, 1653), compared with the revised version in the Maitland Club reprint, <i>The Works of Sir Thomas Urquhart</i> (Edinburgh, 1834), pp. 412–416.</p>
+
+<div class="def">
+  <span class="w">proquiritation</span><span class="pos">noun (Urquhart's coinage)</span>
+  <p><b>Most likely meaning:</b> a public outcry or appeal for redress, a demand proclaimed openly before one's fellow citizens.</p>
+  <p>The word comes from the Latin verb <i>quiritare</i>, "to cry out for help". Literally it meant to call on the <i>Quirites</i>, the citizens of Rome, as a wronged person would in the street. The related noun <i>quiritatio</i> means a cry of distress or appeal for help. Latin dictionaries also record a rare compound, <i>proquiritare</i>, "to cry out publicly". The prefix <i>pro-</i> adds "forth, openly, before the people". A "proquiritation" is therefore a cry of grievance made in public, which fits exactly how Urquhart uses it: a numbered list of what he calls his "just demands" upon the State. The 1834 editors gloss the word the same way, describing the book as ending with "a fanciful summary of the author's just demands, or 'proquiritations' upon the State" (Introduction, p. xx). The word does not appear to have been used by anyone else.</p>
+</div>
+
+<h2>What the section is and what it does</h2>
+<p>The Proquiritations are the book's closing argument. After six Books setting out his grievances against creditors, the Presbyterian Kirk and the courts, Urquhart compresses everything into 32 formal demands addressed to the governing "State", the English Commonwealth that held him as a prisoner on parole after the Battle of Worcester (1651).</p>
+<ul>
+  <li><b>Form.</b> Each Proquiritation is a single long sentence in the style of a legal petition. It usually opens with a "Seeing [that]…" clause stating a fact, followed by "That…" stating what should be done. It closes with a formula such as "is the humble desire of", "is the hearty wish of" or "is the opinion of", followed by a pair of initials.</li>
+  <li><b>The initials.</b> Each demand is "signed" by a different supporter: K. F., P. O., N. Wa., and so on. None has been identified, and they may be invented or anonymised. Their effect is to turn one man's petition into a chorus of backers, and the last item (Tn. Vs.) declares that all of it is the unanimous wish of everyone who has known him, "of any Nation".</li>
+  <li><b>The number 32.</b> A short preface explains the choice. 32 was "by the Rabbies of old ascribed to Wisdom, and by Pythagoras to Justice". An "algebraical hexastick" (six-line verse) then shows that 32 is two to the fifth power: "Of Postulatas a sursolid" (a fifth power), whose "content" is twice "that square of squares" (16), "Which is the double of the cube of two". The verse ends with a pun: "How that square dealing will him best become".</li>
+  <li><b>Purpose.</b> The section works as a summary for busy officials. It recaps the whole book as a checklist of concrete demands, each paired with a reason. Those reasons appeal to justice, to the State's self-interest and reputation, and to its ambitions for Scotland. Several items flatter the English regime, presenting Urquhart as a natural ally against the Presbyterian Kirk, which was the Commonwealth's enemy too.</li>
+</ul>
+
+<h3>The demands grouped by theme</h3>
+<div class="themes">
+  <div class="theme"><b>Lineage &amp; Cromarty</b>His ancient family and its hereditary lands. <span>1653 № 7, 11, 12, 13</span></div>
+  <div class="theme"><b>Debts &amp; creditors</b>Inherited debts, usurers, sequestration. <span>№ 2, 5, 8, 18, 19, 25, 30</span></div>
+  <div class="theme"><b>Learning &amp; posterity</b>His books and inventions as a public good. <span>№ 3, 6, 10, 14, 17, 24, 31</span></div>
+  <div class="theme"><b>Loyalty to the new regime</b>Keeping his parole, friendship with England, fairness relative to others. <span>№ 9, 15, 20, 21, 22, 26, 27, 28, 29</span></div>
+  <div class="theme"><b>The Kirk</b>His refusal to submit to Presbyterian ministers. <span>№ 16, 20</span></div>
+  <div class="theme"><b>Reputation &amp; precedent</b>The State's own fame; no dangerous precedent. <span>№ 1, 4, 23</span></div>
+  <div class="theme"><b>Summing up</b>Universal endorsement. <span>№ 32</span></div>
+</div>
+
+<h2>The 1653 and 1834 versions</h2>
+<p>The 1834 reprint gives the same 32 Proquiritations under the same initials, but <b>reordered</b> and often <b>rewritten</b>. Only №18, 24, 25, 31 and 32 keep their place. The revision mostly removes direct appeals to "the State" and "the Conqueror" and references to Stirling, Worcester and the English conquest. It adds new details, such as release from being "detained as a prisoner of war". It also varies the closing formulas so that the final item can list them all. The 1834 text's order is the one the Cyphral Distich uses. No 1653 copy with the revised text has yet been identified; see the separate collation report for the evidence.</p>
+<p class="note">Reading the table: rows follow the 1653 order. A green 1834 number means the item kept its position. The page reference under each 1834 text is to the 1834 volume. The 1653 text was transcribed from the microfilm with long-s printed as "s"; the 1834 text is from the Google Books scan, proofread against its page images.</p>
+</div>
+
+<div class="tablewrap">
+<table>
+<thead><tr><th>1653 №</th><th>1653 text (original edition)</th><th>1834 №</th><th>1834 text (Maitland Club reprint)</th><th>Meaning / interpretation</th></tr></thead>
+<tbody>
+<tr>
+<td class="n" data-label="1653 №">1</td>
+<td class="t" data-label="1653 text">That he, whose good name is like to be eternized in the grave, should not in his life-time be neglected by the State of an immortal fame, is the hope of <span class="sig">A. S.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">13</span></td>
+<td class="t" data-label="1834 text">That he whose good name is like to be eternized to following ages, after that unto nature he hath paid the due which mortality will require of him, shall not in his life-time have his just demands denied by that authority whose representators upon equity promise to lay the foundation of an immortal fame, is the hope of <span class="sig">A. S.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">A man whose name will live on after his death should not be neglected during his lifetime by a government that itself hopes to be remembered for ever. <em>1834:</em> those who promise to lay "the foundation of an immortal fame" should not refuse his just demands while he lives.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">2</td>
+<td class="t" data-label="1653 text">That to the overthrow of Equity in the person of the Author, the State suffer not any Law of theirs to become the executioner of the spleen and covetousness of his implacable adversaries, is the humble desire of <span class="sig">B. H.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">4</span></td>
+<td class="t" data-label="1834 text">That to the overthrow of equity in the person of the Author, the rigour of a wrested law be not permitted to become the executioner of the spleen and covetousness of his implacable adversaries, is the earnest desire of <span class="sig">B. H.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Do not let the law be twisted into a weapon for his greedy, spiteful enemies, destroying basic fairness toward him. <em>1834:</em> the same, but it speaks of "the rigour of a wrested law" rather than asking "the State" directly.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">3</td>
+<td class="t" data-label="1653 text">That they who look meerly to the present time, without any regard of the future, be not permitted by the State to deprive him of his means, who, for the weal of after-ages, spends his time most vertuously, is the desire of <span class="sig">D. I.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">7</span></td>
+<td class="t" data-label="1834 text">That they who look meerly to the present time, without any regard of the future, be not permitted to deprive him of his means, who for the good of after-ages employs his spare hours most vertuously, is the true desire of <span class="sig">D. J.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Short-sighted people who think only of today should not be allowed to strip of his income a man who spends his time working for future generations.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">4</td>
+<td class="t" data-label="1653 text">That outlandish Nations, with whom the Author hath much acquaintance, may, for the States favour to him, when they shall restore him to his own, after the above-written manner, offer up a most cordial sacrifice to their Authority, is the humble desire of <span class="sig">Ai. Bs.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">10</span></td>
+<td class="t" data-label="1834 text">That outlandish nations, where the Author’s fame dwells advantagiously with an expansed reputation, will most highly extol the restorers of him to his own, for an act of perfect and well-principled generosity, is the confident opinion of <span class="sig">Ai. Bs.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Foreign nations where Urquhart is known will honour the State if it restores him. Justice to him will enhance its international reputation.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">5</td>
+<td class="t" data-label="1653 text">That seeing the most of Scotland is subdued, those that had long before that enslaved themselves to the most abominable vice of oppressing others, be not permitted by the Conqueror to meddle with the estate of him that never injured any, is the earnest suit of <span class="sig">E. G.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">8</span></td>
+<td class="t" data-label="1834 text">That those who, long before the distractions of Scotland, had enslaved themselves to the abominable vice of oppressing others, be not permitted, now that by their means that country is brought lowe, to meddle with the estate of him who never injured any, is the earnest suit of <span class="sig">E. G.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Now that Scotland has been conquered, the conqueror should not let men long addicted to oppressing others (his creditors) seize the estate of someone who never wronged anyone. <em>1834:</em> "the Conqueror" and "Scotland is subdued" are gone; it says only that Scotland "is brought lowe".</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">6</td>
+<td class="t" data-label="1653 text">Seeing the Authors Treatises are conducible to posterity, for the weal whereof the now-established Authority hath undergone so many difficulties, that for its respect to them, and hopes of their retribution of praises, he may be better rewarded, then if he were a present-time-server, without consideration of the future, is the desire of <span class="sig">Ei. Z.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">12</span></td>
+<td class="t" data-label="1834 text">Seeing the Author&#x27;s treatises are conducible to posterity, for the benefit whereof the most splendid states and potentates do usually undergo great hazards and difficulties—that out of respect to succeeding ages, and hope of their due retribution in praises, he may be better rewarded then if he were a present time-server, without consideration of the future, is the humble suit of <span class="sig">Ei. Z.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">His books will benefit posterity, which the new government also claims to serve. For the sake of future ages, and the praise they will give, reward him better than a mere time-server.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">7</td>
+<td class="t" data-label="1653 text">Seeing from the creation of the world, it hath pleased the Author to deduce his extraction, without baulking since the dayes of Adam, so much as one of his progenitors on the paternal side, That the State vouchsafe to put him in a consistence of protracting his posterity through as many hereditary successors in a lineal descent, according to the contents of the preceding Tractate, is the desire of <span class="sig">K. F.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">1</span></td>
+<td class="t" data-label="1834 text">Seeing, from the creation of the world it hath pleased the Author to deduce his extraction, without baulking since the days of Adam so much as one of his progenitors on the paternal side—that the said Author may be put in a consistence of protracting his posterity through as many hereditary successors in a lineal descent, according to the contents of the preceding Tractate, is the desire of <span class="sig">K. F.</span><span class="pg">p. 412</span></td>
+<td class="i" data-label="Meaning">Having traced his family from the creation of the world without missing a single generation (in his <i>Promptuary of Time</i>), he asks to be given the means to continue that line into the future.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">8</td>
+<td class="t" data-label="1653 text">Seeing the most innocent of the Scotish Nation is no more blameless, then he, that his sequestration should be taken off, and a considerable acknowledgment allowed him, for the great loss he sustained by the rigour of the subsequestrator, is the desire of <span class="sig">V. Fs.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">11</span></td>
+<td class="t" data-label="1834 text">Seeing there is none, considering the relations and tyes whereunto the Author by nature and duty was bound, can with any shew of reason be accounted more blameless then he—that he have his sequestration taken off, his person no longer detained as a prisoner of war, and some competent acknowledgement allowed him for the great loss he hath sustained by the rigour of the unmerciful, not to say knavish, subsequestrator, is the real desire of <span class="sig">V. Fs.</span><span class="pg">pp. 413–414</span></td>
+<td class="i" data-label="Meaning">He is as blameless as the most innocent Scot. The seizure (sequestration) of his estate should be lifted and he should be compensated for what the sub-sequestrator took. <em>1834</em> adds: he should no longer be held "as a prisoner of war".</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">9</td>
+<td class="t" data-label="1653 text">Seeing the Author hath been still faithful to his trust, never culpable of Parole-breaking, but always true in every word and action, That the generosity of the State will not suffer him to be exposed to the inhumane dealing of those Country-men of his, who for their owne ends, make no bones of being guilty of greater breaches, is the desire of <span class="sig">Wh. Y.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">15</span></td>
+<td class="t" data-label="1834 text">Seeing the Author hath been still faithful to his trust, never culpable of parol-breaking, but always true in every word and action—that the discretion of the present authority will not suffer him to be exposed to the inhumane dealing of those countrymen of his who for their own ends make no bones of being guilty of greater breaches, is the hearty wish of <span class="sig">Wh. Y.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">He has always kept his word, and has never broken his parole. The State should not abandon him to treacherous countrymen who think nothing of breaking far greater promises.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">10</td>
+<td class="t" data-label="1653 text">Seeing he is born to the profit of a few, who thinketh onely on the people of his age, and to that of fewer, whose thoughts exceed not the reach of his own proper interest, That the illustrious State shall consider of the difference betwixt the Authors competitors of dark and narrow projects, and his owne splendid and ample endeavours, comprehensive by appearance of the whole latitude of time, is the humble desire of <span class="sig">X. Ya.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">9</span></td>
+<td class="t" data-label="1834 text">Seeing he is born to the profit of few, who thinketh onely on the people of his age ; and to that of fewer, whose thoughts exceed not the reach of his own proper interest—that due consideration may be had of the difference betwixt the Author&#x27;s competitors of dark and narrow projects, and his own splendid and ample endeavours, comprehensive by appearance of the whole latitude of time, is the strong desire of <span class="sig">X. Ya.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Distinguish between his rivals, small men with "dark and narrow projects" serving only themselves, and his own ambitions, which aim to benefit all of future time.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">11</td>
+<td class="t" data-label="1653 text">The Authors family being of the greatest antiquity in Scotland, and by an especial providence till this time preserved from that utter subversion intended by the iniquity of his covetous and dissembled enemies, should in my opinion obtain a larger measure of protection from the Sate, then any other race in that land, and himself favoured with the grant of all that in this foregoing Treatise is demanded by him, (which that it be so) is the humble desire of <span class="sig">Gh. En.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">14</span></td>
+<td class="t" data-label="1834 text">That the Author&#x27;s family being one of the greatest antiquity in Scotland, and by an especial providence until this time preserved from that utter subversion intended by the iniquity of his covetous and dissembled enemies, should obtain, cæteris paribus, as large a measure of protection as any other race in the whole Isle of Britain, and himself favoured with the grant of all that in his foregoing Treatise is demanded by him, is the real wish of <span class="sig">Gh. En.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">His family is among the oldest in Scotland and has been providentially preserved from destruction by its enemies. It deserves more protection than any other, and all his demands should be granted.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">12</td>
+<td class="t" data-label="1653 text">That the shire of Cromarty, which ever from the beginning hath been the receptacle of the most harmless inhabitants, be not bestowed on any other then the Author, whose predecessors, for uprightness and integrity of carriage, had not their equals in that Nation, is the desire of <span class="sig">Yo. Bn.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">5</span></td>
+<td class="t" data-label="1834 text">That the Shire of Cromartie, which ever from the beginning hath been the receptacle of the most harmless inhabitants, be not bestowed on any other then the Author, whose predecessors, for uprightness and integrity of carriage, were not, if equalled, inferiour to the best of any nation, is the longing desire of <span class="sig">Yo. Bn.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">The shire of Cromarty, always home to peaceful people, should go to no one but Urquhart, heir of unmatched honest ancestors.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">13</td>
+<td class="t" data-label="1653 text">That the noblest State in the world, will not now permit that to be exposed to sale, which never hitherto was made vendible in any preceding age, and that the Lands and shire of Cromarty, (which by none that ever breathed were either bought or sold) should by a grant from the State, be in the heritable possession of the Author, as nearest in line to the aboriginary owner, is the earnest desire of <span class="sig">T. Wi.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">16</span></td>
+<td class="t" data-label="1834 text">That the power now in being will not permit that to be exposed to sale which never hitherto was made vendible in any preceding age, and that the lands and Shire of Cromartie, which by none that ever breathed were either bought or sold, should, by a peculiar grant paramount, be in the heritable possession of the Author, as neerest in line and by descent to the aborigenary owner, is the earnest request of <span class="sig">T. Wi.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">Cromarty's lands have never in history been bought or sold. Do not allow them to be sold now; grant them by special act to Urquhart as nearest heir of their original owner.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">14</td>
+<td class="t" data-label="1653 text">That the Author being but as a clear spark, from whence gleameth the most of the pure light that is to be seen of any learned invention in that Country of Scotland, it be not quenched and quite extinguished, by the foul and black water of an usurious puddle drunk up there, by the natives almost of all sorts, is the humble request of <span class="sig">Bu. Ts.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">6</span></td>
+<td class="t" data-label="1834 text">That the Author being as a clear spark from whence gleameth the greatest part of the pure light that is to be seen of any learned invention in that country of Scotland, it be not quenched and quite extinguished by the foul and black water of an usurious puddle, drunk up there by too many of the natives almost of all sorts, is the humble request of <span class="sig">Bu· Ts.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">Urquhart is the bright spark of learned invention in Scotland. Do not let it be put out by the "foul and black water" of usury that his countrymen have drunk so deeply.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">15</td>
+<td class="t" data-label="1653 text">The Authors education having been more abroad then at home, whereof England may duely claim no small share; that by the State of that Nation, he should be singled out to suffer more then the disaffecters of both their rule and country-men, is not the expectation of <span class="sig">Wo. Kn.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">17</span></td>
+<td class="t" data-label="1834 text">The Author having been very often, with an applause hinc inde, conversant both abroad and within the four seas, and sometimes for several months together, without the variety of any other company, with many choice English gentlemen—that by any supreme authority of that nation he should be singled out to suffer as much as the most inveterate disaffecters, out of a national antipathy, of both their rule and country-men, is not the expectation of <span class="sig">Wo. Kn.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">He was educated largely abroad, partly in England. He does not expect the English to single him out for harsher treatment than their real enemies. <em>1834</em> recasts this as his long friendship with "many choice English gentlemen".</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">16</td>
+<td class="t" data-label="1653 text">That the Authors unwillingness to acknowledg an Ecclesiastical soveraigntie above the supream established Civil authority, be not a motive to deal more rigorously with him, then with any of those other his compatriots, that turn tail to every government, without affection to any, is the desire of <span class="sig">V. Ye.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">21</span></td>
+<td class="t" data-label="1834 text">That the Author&#x27;s aversness from acknowledging an ecclesiastical soveraignty above the lawful supreme authority in civilibus, be not a motive to deal more rigorously with him then with those time-servers who turn tail to every government, without bearing affection to any, is the suit of <span class="sig">V. Ye.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">His refusal to accept the Kirk's authority over civil government should not make the State harder on him than on turncoats who change sides with every regime.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">17</td>
+<td class="t" data-label="1653 text">There being scarce any other Gentleman in Scotland, who to the press so freely adventureth his name as himself, that the Author&#x27;s thus favouring this Isle with elucubrations beyond the reach of most of his compatriots, may not for his service to the publick by the attolerance of the State suffer any detriment by his owne country-men in his private fortune, is the desire of <span class="sig">Q. O.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">22</span></td>
+<td class="t" data-label="1834 text">There being very few gentlemen in his condition, who to the press so freely adventure their names on subjects of any elaboured strain—that the Author&#x27;s thus favouring this Island with elucubrations beyond the reach of his competitors, be not met for that his publike service with such a permissive attolerance or connivence from the State, as might hurry upon him most grievous detriments by his own country-men in his private fortunes, is the cordial desire of <span class="sig">Q. O.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">Almost no other Scottish gentleman dares publish under his own name. His service to the public as an author should not be repaid by ruin at the hands of his countrymen while the State looks on.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">18</td>
+<td class="t" data-label="1653 text">That the reasons deduced by the Author in the above-written Treatise, why he should not be made lyable to any other debt then that of his own contracting, may be so relished by the supream authority of the Land, as that thereby he may be exonered of any other burthen, is the humble desire of <span class="sig">C. W.</span></td>
+<td class="n" data-label="1834 №"><span class="same">18</span></td>
+<td class="t" data-label="1834 text">That the reasons deduced by the Author in the above written Treatise, why he should not be made liable to any other debt then that of his own contracting, may be so relished by [those] in whose power it is to make them effectual, as that thereby he may be forthwith exonered of any other burthen, is the earnest wish of <span class="sig">C. W.</span><span class="pg">p. 414</span></td>
+<td class="i" data-label="Meaning">He should be held liable only for debts he contracted himself, not his father's, and so be freed from all other burdens.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">19</td>
+<td class="t" data-label="1653 text">Their being none in Scotland less covetous then he, nor more averse from the excessive love of money, that it may please the State so to protect him, as that he be not made a prey to the most avaritious men of any, and such as respect Silver and Gold beyond whatever else is most precious in the world, is the humble desire of <span class="sig">L. Ch.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">20</span></td>
+<td class="t" data-label="1834 text">There being none in Scotland less covetous then he, nor more averse from the excessive love of money—that it may please those, in whom the power of protection is, so to protect him, as that he be not made a prey to the most avaritious men of any, and such as respect silver and gold beyond whatever else is most precious in the world, is the request of <span class="sig">L. Ch.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">No one in Scotland is less greedy than he is. The State should protect him from becoming the prey of the greediest men, who value silver and gold above all.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">20</td>
+<td class="t" data-label="1653 text">Seeing the Authors unwillingness to pin his faith implicitely to the sleeve of the Ministry, would at Sterling have debarred him (although otherwaies he had been willing) from being admitted to any charge in the Scotish army against the English; and that therefore his going to Worcester would by all appearance seem rather to have proceeded from his desire to shun old adversaries at home, then to acquire new ones abroad, that he should be looked upon with a more amicable eye from the State, is the humble opinion of <span class="sig">M. Gs.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">19</span></td>
+<td class="t" data-label="1834 text">Seeing the Author’s unwillingness to pin his faith implicitly to the sleeve of the ministery, or to the single backless tenets in Ecclesiasticis of any church-man whatsoever, did exclude him from military charges in their covenanting armies ; and that therefore, having at no time been under their banner, he by all appearance should be looked upon with the more amicable eye by those who did reduce their unlimited power, is the humble opinion of <span class="sig">M. Gs.</span><span class="pg">pp. 414–415</span></td>
+<td class="i" data-label="Meaning">Because he refused to submit to the Presbyterian ministers, he was barred at Stirling from any command in the Scottish army. So his joining the march to Worcester was a flight from old enemies at home, not a wish to make new ones in England, and the State should regard him kindly. <em>1834</em> removes Stirling, Worcester and the army.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">21</td>
+<td class="t" data-label="1653 text">That the exemplary civility of the Author, for being apt to have influence on the mindes of the rudest of his kinred and neighbours, even unto the remotest hills of Scotland, may perswade the State, whose endeavour it is to bring them into as neer a conformity as may be, in Manners and Language with the natives of England, to settle him, without incumbrance, in the inheritance of his predecessors, is the desire of <span class="sig">Du. Th.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">23</span></td>
+<td class="t" data-label="1834 text">That the exemplary civility of the Author, for being apt to have influence on the mindes of the rudest of his kindred and neighbours, even unto the remotest hills of Scotland, may be of efficacy to perswade such amicable spirits at the helm of publike affairs, as would heartily endeavour the bringing of the two nations into as strict an union and neer conformity in laws, liberties, priviledges, customs, maners, and language, as is possible and expedient, to settle and stablish him in the inheritance of his predecessors, is the opinion of <span class="sig">Du. Th.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">His civilising example can influence even the roughest Highlanders. That serves the State's own aim of bringing Scotland's manners and language into line with England's, so settle him in his inheritance.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">22</td>
+<td class="t" data-label="1653 text">Seeing the States adversaries had kept some three yeers ago a Garison in the Authors house for twelve months together, and that for these many yeers past, by several exactions, tolerated plunderings, and other such-like unmerciful dealings, without any just occasion given, his rents have been made almost totally unserviceable, that he may now, for his greater peace in the future, be exonered of the English Garison that is in his house; and after its removal, have himself fully setled in his own, with all manner of ease and tranquillity, is the humble desire of <span class="sig">N. Wa.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">3</span></td>
+<td class="t" data-label="1834 text">Seeing the covenanters, who are at this time accounted the State’s adversaries, kept, some three yeers ago, a garison in the Author&#x27;s house for the space of a twelve-month ; and that, for these many yeers past, by several exactions, tolerated plunderings, and other such like unmerciful dealings, without any just occasion given, his rents have been made almost totally unserviceable—that he may now, for his greater peace in the future, be exonered of the English garison which is in his house, and, after its removal, have himself fully setled in his own, with all maner of ease and tranquility, is the humble desire of <span class="sig">N. Wa.</span><span class="pg">p. 413</span></td>
+<td class="i" data-label="Meaning">His enemies kept a garrison in his house for a year, three years ago, and plundering and exactions have made his rents worthless. Now remove the English garrison as well and leave him in peace in his own home.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">23</td>
+<td class="t" data-label="1653 text">Seeing the grant of what is demanded in this Treatise, can no ways introduce a preparative of any dangerous consequence, as hath been evidently shewn in the above-written Introduction, That the State may be pleased, without any suspicion of being troubled upon the like grounds by any other of his Compatriots, condescend to his desires therein, is the hearty wish of <span class="sig">P. Oi.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">2</span></td>
+<td class="t" data-label="1834 text">Seeing the grant of what is demanded in this Treatise can no way introduce a preparative of any dangerous consequence, as hath been evidently shewn in the above written introduction—that it may be thought expedient, without any suspicion of being troubled upon the like grounds by any other of this Island, to condescend to his desires therein, is the hearty wish of <span class="sig">P. O.</span><span class="pg">p. 412</span></td>
+<td class="i" data-label="Meaning">Granting his demands sets no dangerous precedent, because no one else could claim relief on the same grounds. So the State can safely grant them.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">24</td>
+<td class="t" data-label="1653 text">That sublime, Natural and Moral Philosophy, Mathematicks, Poesie, and many other kindes of good Literature should not be any longer supprest by the injustice of devouring and insatiable seekers ignorant of every thing that is not lucrative for the bag, is the desire of <span class="sig">Au. Ps.</span></td>
+<td class="n" data-label="1834 №"><span class="same">24</span></td>
+<td class="t" data-label="1834 text">That sublime, natural, and moral philosophy, mathematicks, poesie, and many other kindes of good literature, should not be any longer supprest by the injustice of devouring and insatiable seekers, ignorant of every thing that is not lucrative for the bag, is the cordial request of <span class="sig">Au. Ps.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">Philosophy, mathematics, poetry and learning in general should not be smothered by greedy creditors who care only for what fills their purses.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">25</td>
+<td class="t" data-label="1653 text">Seeing many in Scotland live at ease who enjoy more of their neighbours unlawfully-acquired goods then formerly was their own, That the Author who never yet could, for the importunity of waspish seekers, and terrour of a rigorous Law, most often in the mouthes of partial men, get applied, in the most fertile yeer that was, for his own use the tenth part of his rent, should now, by the magnificence of the State, reap the fruits of his own, without the hazard of such terrible soakers, is the earnest desire of <span class="sig">Gu. Du.</span></td>
+<td class="n" data-label="1834 №"><span class="same">25</span></td>
+<td class="t" data-label="1834 text">Seeing many in all the corners almost of this Island live at ease, who enjoy more of their neighbour&#x27;s unlawfully-acquired goods, then formerly they had of their own—that the Author, who never yet could, for the importunity of waspish seekers, and terrour of a rigorous law, most often in the mouthes, or at the disposure of partial men, get applied in the most fertile yeer that was, for his own use, the tenth part of his rents, should now by a paramount magnificence, reap the fruits of his own meanes, without the hazard of such terrible soakers, is the vehement desire of <span class="sig">Gu. Du.</span><span class="pg">p. 415</span></td>
+<td class="i" data-label="Meaning">Many Scots live comfortably on goods unjustly taken from their neighbours, while he has never been able to keep even a tenth of his own rents. Let him finally enjoy his own income without fear of these "terrible soakers".</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">26</td>
+<td class="t" data-label="1653 text">As the overthrow of Vice should be the establishment of Vertue, That the conquest of his opposers reseat the Author in his own inheritance, and that the State of England do it, which professeth the subdument of irregular spirits, is both the expectation and desire of <span class="sig">Tm. Ou.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">27</span></td>
+<td class="t" data-label="1834 text">As the overthrow of vice should be the establishment of vertue—that the reducing of his opposers into a more narrow sphere of action then that wherein formerly they were wont to bestir themselves, should make the Author to be reseated in the inheritance of his ancestors, by those who hitherto have professed the subdument of irregular spirits, is the confident expectation of <span class="sig">Tm. Ou.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">If overthrowing vice should establish virtue, then the defeat of his opponents should restore him to his inheritance. England, which claims to subdue unruly spirits, should do it. <em>1834:</em> the "conquest" and "the State of England" are replaced by a general appeal to those who profess to subdue "irregular spirits".</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">27</td>
+<td class="t" data-label="1653 text">Seeing the Authors designe hath been these many yeers the same, in matter of furthering Manufacture, Commerce, with all manner of Trading and Negotiation with the most industrious of the English now inhabiting Scotland That the State will not, in favour of those that have obstructed the performance of so worthy enterprises, denude him of his just inheritance, is the desire of <span class="sig">Yi. Pn.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">26</span></td>
+<td class="t" data-label="1834 text">Seeing the Author’s designes have been for these many yeers, the same, in matter of furthering manufactures and commerce, together with all maner of trading and negotiation, with the most industrious of England and other nations—that the present authority will not, in favour of those that have obstructed the performance of so worthy enterprises, denude him of his just inheritance, is the real hope of <span class="sig">Yi. Pn.</span><span class="pg">pp. 415–416</span></td>
+<td class="i" data-label="Meaning">He has long worked to promote manufacturing and trade with the English. Do not strip him of his inheritance to please those who obstructed that work.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">28</td>
+<td class="t" data-label="1653 text">As love to the English Nation more then to their money, deserveth from that Government the larger influence of grace; so, that the Authors affection to the equitable Customs, &amp; innate Civility of that Nation, being of a more generous temper then that of others, who laboured their introduction for pecunial interests, may be regarded with an eye of greater favour, is the humble desire of <span class="sig">Gn. We.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">29</span></td>
+<td class="t" data-label="1834 text">As the love of goodness more then money, deserveth a larger influence of grace—so, that the Author&#x27;s affection to the equitable customs and innate civility of the English nation, being of a more generous temper then that sullen and selfish disposition in many others, which doth no longer relish their conversation then it is found apt to shore up the advantage of some pecuniary interest, may be regarded with an eye of greater favour, is the hearty request of <span class="sig">Gn. We.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">His admiration for English customs and civility is genuine, unlike others who court the English for money, and it deserves special favour.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">29</td>
+<td class="t" data-label="1653 text">Seeing there are many heritors in Scotland, who though for being actually in charge against the English, as pretended opposers of Presbytery, they did either inrich themselves, or by their levies and quarterings received great profits to the no small damage of the Country, do nevertheless enjoy their means at this time (whose good fortune notwithstanding thereby, I wish no man to envie) with as much tranquillity as before; That the Author, who never yet had any benefit to the prejudice of another, be placed rather in a better then worse condition then any of those, is the desire of <span class="sig">Tu. J.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">30</span></td>
+<td class="t" data-label="1834 text">Seeing there are many gentlemen of considerable estates, who, though actually in charge against the English, as pretended opposers of Presbytery, did either enrich themselves, or by their levies and quarterings in the Kirk’s service, received great profits, to the no small damage of the country, do nevertheless, and that justly too, enjoy their means at this time, which good fortune notwithstanding in them I wish no man to envie, with as much tranquillity as before—that the Author, who never yet had any benefit to the prejudice of another, be placed, if not in a better, at least, according to the rules of distributive justice, in an equal condition with any of those, is the real expectation of <span class="sig">Tu. J.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">Many landowners who fought the English, and even profited from the war, now enjoy their estates in peace. He, who never gained at anyone's expense, deserves at least as good a position as they have.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">30</td>
+<td class="t" data-label="1653 text">That the vexation uncessantly for these ten yeers past sustained by the Author, from men of unsatisfiable appetites, in matter of worldly means, may not, as formerly, to the great hinderance of divulging learned Treatises, be any longer an impediment unto him, is the earnest desire of <span class="sig">R. Yu.</span></td>
+<td class="n" data-label="1834 №"><span class="moved">28</span></td>
+<td class="t" data-label="1834 text">That the vexation uncessantly for these ten yeers past, sustained by the author from men of unsatisfiable appetites, in matter of worldly means, may not, as formerly, to the great hinderance of divulging treatises conducible to posterity, be any longer an impediment unto him, is the cordial wish of <span class="sig">R. Yu.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">Ten years of unrelenting pressure from insatiable creditors should no longer stand in the way of publishing his learned works.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">31</td>
+<td class="t" data-label="1653 text">That a plenary grant of the Authors demands, after the manner above specified in the Tractate of his Introduction, will prove a great encouragement to good spirits, in the prosecuting of vertuous endeavours, is the opinion of <span class="sig">Wu. Fn.</span></td>
+<td class="n" data-label="1834 №"><span class="same">31</span></td>
+<td class="t" data-label="1834 text">That a plenary grant of the Author’s demands, after the manner above specified in this noble Tractate of his Introduction, will prove a great encouragement to good spirits, and hinderance to none in the prosecuting of vertuous endeavours, is the stedfast and firm opinion of <span class="sig">Wu. Fn.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">Granting his demands in full will encourage other able minds in worthwhile pursuits.</td>
+</tr>
+<tr>
+<td class="n" data-label="1653 №">32</td>
+<td class="t" data-label="1653 text">That this is the unanimous desire of all the good persons of either sex, with whom, of any Nation, in whatever Country, whether at home or abroad, the Author hath been formerly acquainted, is testified by <span class="sig">Tn. Vs.</span></td>
+<td class="n" data-label="1834 №"><span class="same">32</span></td>
+<td class="t" data-label="1834 text">That this is the unanimous desire, wish, request, suit, opinion, hope, and expectation of all the good persons of either sexe, with whom of any nation, in whatever country, whether at home or abroad, the Author hath been formerly acquainted, is duely testified and affirmed by <span class="sig">Tn. Vs.</span><span class="pg">p. 416</span></td>
+<td class="i" data-label="Meaning">All the good people of every nation who have known him, men and women alike, endorse everything above. <em>1834</em> spells out that this is their "desire, wish, request, suit, opinion, hope, and expectation", the seven closing words used across the revised items.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<footer>The interpretations are paraphrases written for this report. Where the 1834 wording changes the sense, the interpretation says so. The 1653 text is from the copy filmed for Early English Books (identified elsewhere as the British Library copy; EEBO-TCP A64608). The 1834 text is from the Google Books scan id eU0JAAAAQAAJ.</footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF Page Turner</title>
+<style>
+  :root {
+    --bg: #1b1d22;
+    --panel: #24262c;
+    --panel-border: #35383f;
+    --text: #e8e9ec;
+    --text-dim: #9a9ea7;
+    --accent: #5b8cff;
+    --accent-dim: #3c5fb8;
+    --page-bg: #efe9da;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+  #app { display: flex; flex-direction: column; height: 100%; }
+
+  /* ---------- Toolbar ---------- */
+  #toolbar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; background: var(--panel);
+    border-bottom: 1px solid var(--panel-border);
+    flex-wrap: wrap;
+  }
+  #toolbar h1 {
+    font-size: 14px; font-weight: 600; margin: 0 8px 0 0; color: var(--text-dim);
+    white-space: nowrap;
+  }
+  #file-name {
+    font-size: 13px; color: var(--text-dim); max-width: 240px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .toolbar-group { display: flex; align-items: center; gap: 8px; }
+  .spacer { flex: 1; }
+
+  button, select {
+    background: #2d3039; color: var(--text); border: 1px solid var(--panel-border);
+    border-radius: 6px; padding: 7px 12px; font-size: 13px; cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  button:hover:not(:disabled), select:hover { background: #363a45; border-color: #454a56; }
+  button:disabled { opacity: .35; cursor: default; }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button.primary:hover { background: var(--accent-dim); }
+  select { padding: 7px 8px; }
+  label.ctrl { font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; }
+  input[type="range"] { accent-color: var(--accent); }
+
+  /* ---------- Viewer ---------- */
+  #viewer-wrap {
+    position: relative; flex: 1; display: flex; align-items: center; justify-content: center;
+    overflow: hidden; padding: 20px;
+  }
+  #viewer-wrap.dragover::after {
+    content: ""; position: absolute; inset: 10px; border: 3px dashed var(--accent);
+    border-radius: 12px; background: rgba(91,140,255,0.08); pointer-events: none;
+  }
+  #dropzone-hint {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 14px; text-align: center;
+    color: var(--text-dim); z-index: 5; pointer-events: none;
+  }
+  #dropzone-hint.hidden { display: none; }
+  #dropzone-hint .big { font-size: 42px; opacity: .5; }
+  #dropzone-hint .pick-btn { pointer-events: auto; }
+
+  #stage {
+    position: relative;
+    perspective: 2200px;
+    box-shadow:
+      0 2px 0 #d8d2c2, -2px 2px 0 #d8d2c2,
+      0 10px 30px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.4);
+    background: var(--page-bg);
+  }
+  #stage.hidden { display: none; }
+
+  .page-layer {
+    position: absolute; top: 0; height: 100%; z-index: 1;
+  }
+  .page-layer canvas { display: block; width: 100%; height: 100%; }
+  .slot-left { left: 0; width: 50%; }
+  .slot-right { left: 50%; width: 50%; }
+
+  #spine {
+    position: absolute; top: 0; left: 50%; width: 30px; height: 100%;
+    margin-left: -15px; z-index: 2; pointer-events: none;
+    background: linear-gradient(to right,
+      transparent 0%, rgba(0,0,0,0.22) 42%, rgba(0,0,0,0.22) 58%, transparent 100%);
+  }
+
+  #fold-shadow {
+    position: absolute; inset: 0; opacity: 0; pointer-events: none; z-index: 3;
+  }
+
+  #leaf {
+    position: absolute; top: 0; left: 50%; width: 50%; height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: 0% 50%;
+    pointer-events: none;
+    visibility: hidden;
+    z-index: 4;
+  }
+  #leaf.active { visibility: visible; }
+  .leaf-face {
+    position: absolute; inset: 0;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    background: var(--page-bg);
+  }
+  .leaf-face canvas { display: block; width: 100%; height: 100%; }
+  .leaf-shine { position: absolute; inset: 0; pointer-events: none; }
+  .leaf-back { transform: rotateY(180deg); }
+
+  #spinner {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.35); color: #fff; font-size: 13px; z-index: 6; border-radius: inherit;
+  }
+  #spinner.hidden { display: none; }
+  #spinner .ring {
+    width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.25);
+    border-top-color: #fff; animation: spin 0.8s linear infinite; margin-right: 10px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .click-zone {
+    position: absolute; top: 0; bottom: 0; width: 35%; z-index: 5; cursor: pointer;
+  }
+  .click-zone.left { left: 0; }
+  .click-zone.right { right: 0; }
+
+  /* ---------- Bottom controls ---------- */
+  #controls {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 16px; background: var(--panel);
+    border-top: 1px solid var(--panel-border);
+  }
+  #seek-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  #seek { width: 100%; }
+  #page-label { font-size: 11px; color: var(--text-dim); text-align: center; }
+  #controls button.nav { font-size: 15px; min-width: 38px; }
+
+  footer#controls { flex-shrink: 0; }
+
+  #file-input { display: none; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <header id="toolbar">
+    <h1>PDF Page Turner <small>(build: prefetch-10)</small></h1>
+    <div class="toolbar-group">
+      <button id="btn-open" class="primary">Open PDF…</button>
+      <span id="file-name">No file loaded</span>
+    </div>
+    <div class="spacer"></div>
+    <label class="ctrl">Style
+      <select id="style-select">
+        <option value="simple">Simple Flip</option>
+        <option value="curl" selected>Page Curl</option>
+        <option value="3d">3D Flip</option>
+      </select>
+    </label>
+    <label class="ctrl">Flip Speed
+      <input type="range" id="speed" min="1" max="10" value="5" step="1">
+      <span id="speed-label">Medium</span>
+    </label>
+    <label class="ctrl">Page Delay
+      <input type="range" id="delay" min="1" max="10" value="5" step="1">
+      <span id="delay-label">Medium</span>
+    </label>
+  </header>
+
+  <main id="viewer-wrap">
+    <div id="dropzone-hint">
+      <div class="big">📄</div>
+      <div>Drag &amp; drop a PDF here<br>or</div>
+      <button id="btn-open-2" class="primary pick-btn">Choose a PDF file</button>
+    </div>
+
+    <div id="stage" class="hidden">
+      <div class="page-layer slot-left"><canvas id="canvas-left"></canvas></div>
+      <div class="page-layer slot-right"><canvas id="canvas-right"></canvas></div>
+      <div id="spine"></div>
+      <div id="fold-shadow"></div>
+
+      <div id="leaf">
+        <div class="leaf-face leaf-front">
+          <canvas id="canvas-leaf-front"></canvas>
+          <div class="leaf-shine"></div>
+        </div>
+        <div class="leaf-face leaf-back">
+          <canvas id="canvas-leaf-back"></canvas>
+        </div>
+      </div>
+
+      <div class="click-zone left" id="zone-prev" title="Previous spread"></div>
+      <div class="click-zone right" id="zone-next" title="Next spread"></div>
+
+      <div id="spinner" class="hidden"><div class="ring"></div>Loading…</div>
+    </div>
+  </main>
+
+  <footer id="controls">
+    <button id="btn-start" class="nav" title="First page">⏮</button>
+    <button id="btn-prev" class="nav" title="Previous page">◀</button>
+    <button id="btn-play" class="nav" title="Play / Pause">▶</button>
+    <div id="seek-wrap">
+      <input type="range" id="seek" min="1" max="1" value="1" step="1">
+      <div id="page-label">Page 1 / 1</div>
+      <div id="auto-status" style="font-size:11px;color:var(--accent);text-align:center;min-height:14px"></div>
+    </div>
+    <button id="btn-next" class="nav" title="Next page">▶</button>
+    <button id="btn-end" class="nav" title="Last page">⏭</button>
+  </footer>
+
+</div>
+
+<input type="file" id="file-input" accept="application/pdf">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+(function () {
+  "use strict";
+
+  // ---------- DOM ----------
+  const fileInput = document.getElementById("file-input");
+  const btnOpen = document.getElementById("btn-open");
+  const btnOpen2 = document.getElementById("btn-open-2");
+  const fileNameEl = document.getElementById("file-name");
+  const viewerWrap = document.getElementById("viewer-wrap");
+  const dropHint = document.getElementById("dropzone-hint");
+  const stage = document.getElementById("stage");
+  const spinner = document.getElementById("spinner");
+
+  const canvasLeft = document.getElementById("canvas-left");
+  const canvasRight = document.getElementById("canvas-right");
+  const leaf = document.getElementById("leaf");
+  const leafFrontCanvas = document.getElementById("canvas-leaf-front");
+  const leafBackCanvas = document.getElementById("canvas-leaf-back");
+  const leafShine = document.querySelector(".leaf-shine");
+  const foldShadow = document.getElementById("fold-shadow");
+
+  const zonePrev = document.getElementById("zone-prev");
+  const zoneNext = document.getElementById("zone-next");
+
+  const btnStart = document.getElementById("btn-start");
+  const btnPrev = document.getElementById("btn-prev");
+  const btnNext = document.getElementById("btn-next");
+  const btnEnd = document.getElementById("btn-end");
+  const btnPlay = document.getElementById("btn-play");
+  const seek = document.getElementById("seek");
+  const pageLabel = document.getElementById("page-label");
+  const autoStatus = document.getElementById("auto-status");
+  const styleSelect = document.getElementById("style-select");
+  const speedSlider = document.getElementById("speed");
+  const speedLabel = document.getElementById("speed-label");
+  const delaySlider = document.getElementById("delay");
+  const delayLabel = document.getElementById("delay-label");
+
+  // ---------- State ----------
+  let pdfDoc = null;
+  let totalPages = 0;
+  let currentLeft = null;   // page number shown in the left slot, or null when blank
+  let currentRight = null;  // page number shown in the right slot, or null when blank
+  let currentScale = 1;
+  let baseViewportW = 0, baseViewportH = 0;
+  let isAnimating = false;
+  let playing = false;
+  let playTimer = null;
+  let countdownTimer = null;
+  let resizeRaf = null;
+
+  const MAX_CACHE = 24;
+  const PREFETCH_AHEAD = 10;
+  let lastRenderMs = 0;
+  const pageCache = new Map(); // pageNum -> offscreen canvas
+
+  const SPEED_LABELS = ["Slowest", "Slower", "Slow", "Slow", "Medium", "Medium", "Fast", "Fast", "Faster", "Fastest"];
+
+  // ---------- Utility ----------
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function clampPage(n) {
+    return Math.max(1, Math.min(totalPages, n));
+  }
+
+  // Book pagination: page 1 is always alone (right slot). Pages pair up as
+  // (even, even+1) thereafter. The final page sits alone (left slot) only
+  // when it is even (i.e. there is no following odd page to pair it with).
+  function spreadForPage(page) {
+    page = clampPage(page);
+    if (page === 1) return { left: null, right: 1 };
+    if (page === totalPages && totalPages % 2 === 0) return { left: totalPages, right: null };
+    if (page % 2 === 0) return { left: page, right: page + 1 };
+    return { left: page - 1, right: page };
+  }
+
+  function isFirstSpread() {
+    return currentLeft === null;
+  }
+
+  function isLastSpread() {
+    return currentRight === null || currentRight === totalPages;
+  }
+
+  function getFlipDurationMs() {
+    const v = parseInt(speedSlider.value, 10); // 1 (slow) - 10 (fast)
+    return Math.round(1500 - (v - 1) * (1350 / 9)); // 1500ms .. 150ms
+  }
+
+  function getAutoplayPauseMs() {
+    const v = parseInt(delaySlider.value, 10); // 1 (long pause) - 10 (no pause)
+    return Math.round(1600 - (v - 1) * (1600 / 9)); // 1600ms .. 0ms
+  }
+
+  // ---------- Cache ----------
+  function cacheSet(num, canvas) {
+    if (pageCache.has(num)) pageCache.delete(num);
+    pageCache.set(num, canvas);
+    if (pageCache.size > MAX_CACHE) {
+      const oldestKey = pageCache.keys().next().value;
+      pageCache.delete(oldestKey);
+    }
+  }
+
+  const inflightRenders = new Map(); // pageNum -> Promise<canvas>
+
+  function getRenderedPage(num) {
+    if (pageCache.has(num)) {
+      const c = pageCache.get(num);
+      pageCache.delete(num);
+      pageCache.set(num, c); // refresh LRU order
+      return Promise.resolve(c);
+    }
+    if (inflightRenders.has(num)) return inflightRenders.get(num);
+
+    const scaleAtStart = currentScale;
+    const p = (async () => {
+      const page = await pdfDoc.getPage(num);
+      const viewport = page.getViewport({ scale: scaleAtStart });
+      const off = document.createElement("canvas");
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      off.width = Math.ceil(viewport.width * dpr);
+      off.height = Math.ceil(viewport.height * dpr);
+      const ctx = off.getContext("2d");
+      ctx.scale(dpr, dpr);
+      const t0 = performance.now();
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      lastRenderMs = Math.round(performance.now() - t0);
+      if (scaleAtStart === currentScale) cacheSet(num, off);
+      return off;
+    })();
+    inflightRenders.set(num, p);
+    const done = () => inflightRenders.delete(num);
+    p.then(done, done);
+    return p;
+  }
+
+  function drawInto(sourceCanvas, targetCanvas) {
+    // assigning width/height reallocates the bitmap, so only do it when the size changes
+    if (targetCanvas.width !== sourceCanvas.width) targetCanvas.width = sourceCanvas.width;
+    if (targetCanvas.height !== sourceCanvas.height) targetCanvas.height = sourceCanvas.height;
+    const ctx = targetCanvas.getContext("2d");
+    ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+    ctx.drawImage(sourceCanvas, 0, 0);
+  }
+
+  // Render the pages the next forward flip will need, so the flip can start instantly.
+  function warmNextFlip() {
+    if (currentRight == null) return Promise.resolve();
+    const needed = [currentRight, currentRight + 1, currentRight + 2]
+      .filter((n) => n >= 1 && n <= totalPages);
+    return Promise.all(needed.map((n) => getRenderedPage(n).catch(() => {})));
+  }
+
+  async function paintPage(num, targetCanvas) {
+    const off = await getRenderedPage(num);
+    drawInto(off, targetCanvas);
+  }
+
+  function clearCanvas(c) {
+    const ctx = c.getContext("2d");
+    ctx.clearRect(0, 0, c.width, c.height);
+  }
+
+  async function paintPageOrBlank(num, targetCanvas) {
+    if (num == null) {
+      clearCanvas(targetCanvas);
+      return;
+    }
+    await paintPage(num, targetCanvas);
+  }
+
+  let prefetchGen = 0;
+  async function prefetchAround() {
+    const gen = ++prefetchGen; // a newer call supersedes this one
+    const base = currentRight ?? currentLeft ?? 1;
+    const order = [];
+    for (let i = 1; i <= PREFETCH_AHEAD; i++) order.push(base + i);
+    order.push(base - 1, base - 2, base - 3);
+    for (const n of order) {
+      if (gen !== prefetchGen || !pdfDoc) return;
+      if (n < 1 || n > totalPages || pageCache.has(n)) continue;
+      try { await getRenderedPage(n); } catch (e) { /* ignore */ }
+    }
+  }
+
+  // ---------- Stage sizing ----------
+  async function setupStageForDoc() {
+    const page = await pdfDoc.getPage(1);
+    const vp = page.getViewport({ scale: 1 });
+    baseViewportW = vp.width;
+    baseViewportH = vp.height;
+    fitStage();
+  }
+
+  function fitStage() {
+    if (!pdfDoc) return;
+    const availW = viewerWrap.clientWidth - 40;
+    const availH = viewerWrap.clientHeight - 40;
+    // stage holds a two-page spread: double width, single height
+    const scale = Math.min(availW / (2 * baseViewportW), availH / baseViewportH, 1.8);
+    currentScale = Math.max(scale, 0.1);
+    const w = Math.round(2 * baseViewportW * currentScale);
+    const h = Math.round(baseViewportH * currentScale);
+    stage.style.width = w + "px";
+    stage.style.height = h + "px";
+    // cache keyed by page number was rendered at the old scale; clear it on resize
+    pageCache.clear();
+  }
+
+  // ---------- Rendering / navigation ----------
+  async function showSpreadInstant(left, right) {
+    showSpinner(true);
+    try {
+      await Promise.all([
+        paintPageOrBlank(left, canvasLeft),
+        paintPageOrBlank(right, canvasRight),
+      ]);
+    } finally {
+      showSpinner(false);
+    }
+    currentLeft = left;
+    currentRight = right;
+    updateUI();
+    prefetchAround();
+  }
+
+  async function goToPage(targetPage) {
+    if (!pdfDoc || isAnimating) return;
+    const s = spreadForPage(targetPage);
+    if (s.left === currentLeft && s.right === currentRight) return;
+    await showSpreadInstant(s.left, s.right);
+  }
+
+  function showSpinner(show) {
+    spinner.classList.toggle("hidden", !show);
+  }
+
+  function resetLeafStyles() {
+    leaf.style.transform = "none";
+    leaf.style.boxShadow = "none";
+    leafShine.style.background = "none";
+    foldShadow.style.opacity = "0";
+    foldShadow.style.background = "none";
+  }
+
+  function applyFrame(raw, direction, style) {
+    const t = easeInOutCubic(raw);
+    const sign = direction === "next" ? -1 : 1;
+    const angle = sign * 180 * t;
+    const mid = Math.sin(raw * Math.PI); // 0 -> 0, peaks at raw=0.5, back to 0 at raw=1
+
+    let transform = `rotateY(${angle}deg)`;
+    let shadowStrength = 0.28 * mid;
+    let perspective = 2200;
+
+    if (style === "curl") {
+      perspective = 1600;
+      const bulge = 1 - 0.07 * mid;
+      transform = `rotateY(${angle}deg) scaleX(${bulge})`;
+      shadowStrength = 0.48 * mid;
+      const sweepAngle = sign * 60 + 30;
+      leafShine.style.background = mid > 0.01
+        ? `linear-gradient(${sweepAngle}deg, rgba(0,0,0,${0.4 * mid}) 0%, transparent 35%, transparent 65%, rgba(255,255,255,${0.35 * mid}) 100%)`
+        : "none";
+    } else if (style === "3d") {
+      perspective = 1000;
+      const tilt = mid * 7;
+      const lift = mid * 24;
+      transform = `translateZ(${lift}px) rotateX(${-sign * tilt * 0.5}deg) rotateY(${angle}deg)`;
+      shadowStrength = 0.55 * mid;
+      leafShine.style.background = mid > 0.01
+        ? `linear-gradient(${sign < 0 ? 100 : 80}deg, rgba(0,0,0,${0.3 * mid}) 0%, transparent 50%)`
+        : "none";
+    } else {
+      leafShine.style.background = "none";
+    }
+
+    stage.style.perspective = perspective + "px";
+    leaf.style.transform = transform;
+    leaf.style.boxShadow = `0 0 ${40 * shadowStrength}px rgba(0,0,0,${shadowStrength})`;
+
+    foldShadow.style.background = direction === "next"
+      ? "linear-gradient(to right, rgba(0,0,0,0.55), transparent 55%)"
+      : "linear-gradient(to left, rgba(0,0,0,0.55), transparent 55%)";
+    foldShadow.style.opacity = String(shadowStrength * 0.9);
+  }
+
+  function animateFlip(direction, style) {
+    return new Promise((resolve) => {
+      const duration = getFlipDurationMs();
+      const start = performance.now();
+      leaf.style.transformOrigin = direction === "next" ? "0% 50%" : "100% 50%";
+
+      function frame(now) {
+        const raw = Math.min(1, (now - start) / duration);
+        applyFrame(raw, direction, style);
+        if (raw < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          resolve();
+        }
+      }
+      requestAnimationFrame(frame);
+    });
+  }
+
+  async function flipSpread(direction) {
+    if (!pdfDoc || isAnimating) return;
+    if (direction === "next" && isLastSpread()) return;
+    if (direction === "prev" && isFirstSpread()) return;
+
+    isAnimating = true;
+    updateUI();
+    const style = styleSelect.value;
+
+    // The leaf is always exactly one page wide, hinged at the spine. Going
+    // "next" flips the current right page over to the left; going "prev"
+    // flips the current left page over to the right. The leaf's back face
+    // shows the page that lands in the opposite slot once the flip settles;
+    // the slot being newly revealed is pre-painted underneath and hidden
+    // behind the leaf until the rotation uncovers it.
+    const leafPage = direction === "next" ? currentRight : currentLeft;
+    const backPage = direction === "next" ? leafPage + 1 : leafPage - 1;
+    const revealedPage = direction === "next"
+      ? (leafPage + 2 <= totalPages ? leafPage + 2 : null)
+      : (leafPage - 2 >= 1 ? leafPage - 2 : null);
+    const revealCanvas = direction === "next" ? canvasRight : canvasLeft;
+
+    leaf.style.left = direction === "next" ? "50%" : "0%";
+    leaf.style.transformOrigin = direction === "next" ? "0% 50%" : "100% 50%";
+
+    const prepStart = performance.now();
+    await Promise.all([
+      paintPage(leafPage, leafFrontCanvas),
+      paintPage(backPage, leafBackCanvas),
+      paintPageOrBlank(revealedPage, revealCanvas),
+    ]);
+    const prepMs = Math.round(performance.now() - prepStart);
+    if (playing) autoStatus.textContent = `Turning… (prep ${prepMs}ms, flip ${getFlipDurationMs()}ms)`;
+
+    resetLeafStyles();
+    leaf.classList.add("active");
+    applyFrame(0, direction, style);
+
+    await animateFlip(direction, style);
+
+    leaf.classList.remove("active");
+    resetLeafStyles();
+
+    if (direction === "next") {
+      currentLeft = backPage;
+      currentRight = revealedPage;
+    } else {
+      currentRight = backPage;
+      currentLeft = revealedPage;
+    }
+    // settle the slot the leaf's back face was standing in for
+    await paintPageOrBlank(
+      direction === "next" ? currentLeft : currentRight,
+      direction === "next" ? canvasLeft : canvasRight
+    );
+
+    isAnimating = false;
+    updateUI();
+    prefetchAround();
+  }
+
+  function updateUI() {
+    const rep = currentRight ?? currentLeft ?? 1;
+    seek.min = 1;
+    seek.max = Math.max(1, totalPages);
+    seek.value = rep;
+
+    pageLabel.textContent = !pdfDoc
+      ? "Page 0 / 0"
+      : (currentLeft != null && currentRight != null)
+        ? `Pages ${currentLeft}–${currentRight} / ${totalPages}`
+        : `Page ${rep} / ${totalPages}`;
+
+    const first = !pdfDoc || isFirstSpread();
+    const last = !pdfDoc || isLastSpread();
+    btnStart.disabled = first || isAnimating;
+    btnPrev.disabled = first || isAnimating;
+    btnNext.disabled = last || isAnimating;
+    btnEnd.disabled = last || isAnimating;
+    btnPlay.disabled = !pdfDoc;
+    seek.disabled = !pdfDoc;
+  }
+
+  // ---------- Autoplay ----------
+  function setPlaying(on) {
+    playing = on;
+    btnPlay.textContent = on ? "⏸" : "▶";
+    btnPlay.title = on ? "Pause" : "Play";
+    if (!on) {
+      clearTimeout(playTimer);
+      clearInterval(countdownTimer);
+      autoStatus.textContent = "";
+    }
+  }
+
+  function scheduleAutoAdvance() {
+    if (!playing) return;
+    if (isLastSpread()) {
+      setPlaying(false);
+      return;
+    }
+    const pauseMs = getAutoplayPauseMs();
+    const dueAt = performance.now() + pauseMs;
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      const left = Math.max(0, dueAt - performance.now());
+      autoStatus.textContent = `Next turn in ${(left / 1000).toFixed(1)}s (delay ${pauseMs}ms)`;
+    }, 50);
+    autoStatus.textContent = `Next turn in ${(pauseMs / 1000).toFixed(1)}s (delay ${pauseMs}ms)`;
+    const warm = warmNextFlip();
+    playTimer = setTimeout(async () => {
+      clearInterval(countdownTimer);
+      autoStatus.textContent = `Preparing… (rendering pages, ~${lastRenderMs}ms each)`;
+      if (!playing) return;
+      await warm;
+      await flipSpread("next");
+      scheduleAutoAdvance();
+    }, pauseMs);
+  }
+
+  function playPauseToggle() {
+    if (!pdfDoc) return;
+    if (playing) {
+      setPlaying(false);
+    } else {
+      if (isLastSpread()) return;
+      setPlaying(true);
+      scheduleAutoAdvance();
+    }
+  }
+
+  // ---------- Loading ----------
+  async function loadFile(file) {
+    if (!file || file.type !== "application/pdf") {
+      alert("Please choose a valid PDF file.");
+      return;
+    }
+    setPlaying(false);
+    showSpinner(true);
+    stage.classList.remove("hidden");
+    dropHint.classList.add("hidden");
+    try {
+      const buf = await file.arrayBuffer();
+      pdfDoc = await pdfjsLib.getDocument({ data: buf }).promise;
+      totalPages = pdfDoc.numPages;
+      currentLeft = null;
+      currentRight = null;
+      pageCache.clear();
+      fileNameEl.textContent = file.name;
+      await setupStageForDoc();
+      await showSpreadInstant(null, 1);
+    } catch (err) {
+      console.error(err);
+      alert("Could not load this PDF: " + err.message);
+      stage.classList.add("hidden");
+      dropHint.classList.remove("hidden");
+      pdfDoc = null;
+    } finally {
+      showSpinner(false);
+      updateUI();
+    }
+  }
+
+  // ---------- Event wiring ----------
+  btnOpen.addEventListener("click", () => fileInput.click());
+  btnOpen2.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files[0]) loadFile(e.target.files[0]);
+    fileInput.value = "";
+  });
+
+  ["dragenter", "dragover"].forEach((evt) =>
+    viewerWrap.addEventListener(evt, (e) => {
+      e.preventDefault();
+      viewerWrap.classList.add("dragover");
+    })
+  );
+  ["dragleave", "drop"].forEach((evt) =>
+    viewerWrap.addEventListener(evt, (e) => {
+      e.preventDefault();
+      viewerWrap.classList.remove("dragover");
+    })
+  );
+  viewerWrap.addEventListener("drop", (e) => {
+    const file = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (file) loadFile(file);
+  });
+
+  btnStart.addEventListener("click", () => goToPage(1));
+  btnEnd.addEventListener("click", () => goToPage(totalPages));
+  btnPrev.addEventListener("click", () => flipSpread("prev"));
+  btnNext.addEventListener("click", () => flipSpread("next"));
+  btnPlay.addEventListener("click", playPauseToggle);
+
+  zonePrev.addEventListener("click", () => flipSpread("prev"));
+  zoneNext.addEventListener("click", () => flipSpread("next"));
+
+  seek.addEventListener("input", () => {
+    setPlaying(false);
+    goToPage(parseInt(seek.value, 10));
+  });
+
+  function updateSpeedLabel() {
+    const v = parseInt(speedSlider.value, 10);
+    speedLabel.textContent = `${SPEED_LABELS[v - 1]} (${getFlipDurationMs()}ms)`;
+  }
+  function updateDelayLabel() {
+    const v = parseInt(delaySlider.value, 10);
+    delayLabel.textContent = `${SPEED_LABELS[v - 1]} (${getAutoplayPauseMs()}ms)`;
+  }
+  speedSlider.addEventListener("input", updateSpeedLabel);
+  delaySlider.addEventListener("input", updateDelayLabel);
+  updateSpeedLabel();
+  updateDelayLabel();
+
+  document.addEventListener("keydown", (e) => {
+    if (!pdfDoc) return;
+    if (e.target.tagName === "INPUT" || e.target.tagName === "SELECT") return;
+    if (e.key === "ArrowRight") flipSpread("next");
+    else if (e.key === "ArrowLeft") flipSpread("prev");
+    else if (e.key === "Home") goToPage(1);
+    else if (e.key === "End") goToPage(totalPages);
+    else if (e.key === " ") { e.preventDefault(); playPauseToggle(); }
+  });
+
+  window.addEventListener("resize", () => {
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(async () => {
+      if (!pdfDoc) return;
+      fitStage();
+      await showSpreadInstant(currentLeft, currentRight);
+    });
+  });
+
+  updateUI();
+})();
+</script>
+</body>
+</html>

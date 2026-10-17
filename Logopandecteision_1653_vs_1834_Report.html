@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logopandecteision: 1653 vs 1834</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --ink2: #4d463c; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --del: #f6d3cb; --del-ink: #7a2412; --ins: #d6ecd0; --ins-ink: #1f5418;
+  --bar: #b0603f; --band: #f1e3c8;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --del: #5a2a20; --del-ink: #ffcfc2; --ins: #244420; --ins-ink: #cdeec4;
+    --bar: #d98a64; --band: #3b3222;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --ink2: #cfc6b8; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --del: #5a2a20; --del-ink: #ffcfc2; --ins: #244420; --ins-ink: #cdeec4;
+  --bar: #d98a64; --band: #3b3222;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16.5px/1.6 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 32px 16px 80px; }
+h1 { font-size: 32px; margin: 0 0 4px; font-variant: small-caps; letter-spacing: .02em; }
+h2 { font-size: 22px; margin: 42px 0 10px; font-variant: small-caps; letter-spacing: .02em; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+h3 { font-size: 17px; margin: 22px 0 6px; }
+.sub { color: var(--muted); margin: 0 0 18px; }
+.sans { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+a { color: var(--accent); }
+.answers { display: grid; gap: 14px; margin-top: 18px; }
+.answer { background: var(--panel); border: 1px solid var(--rule); border-left: 4px solid var(--accent); border-radius: 8px; padding: 14px 18px; }
+.answer .q { font: 600 13px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.answer .a { font-size: 19px; font-weight: 600; margin: 4px 0 6px; }
+.answer p { margin: 6px 0 0; color: var(--ink2); }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 18px; margin: 12px 0; }
+table { border-collapse: collapse; width: 100%; font: 14px/1.45 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+th, td { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+td.arr { color: var(--muted); }
+.tablewrap { overflow-x: auto; }
+ul.ev { padding-left: 20px; } ul.ev li { margin: 6px 0; }
+.pro::before { content: "For 17th-century origin — "; font-weight: 600; color: var(--ins-ink); }
+.con::before { content: "Against / unresolved — "; font-weight: 600; color: var(--del-ink); }
+.note { color: var(--muted); font-size: 14.5px; }
+blockquote { margin: 10px 0; padding: 8px 14px; border-left: 3px solid var(--rule); color: var(--ink2); background: var(--panel); border-radius: 0 6px 6px 0; }
+/* chart */
+.chart { position: relative; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  padding: 5px 8px; border-radius: 6px; white-space: nowrap; transform: translate(-50%, -110%); opacity: 0; transition: opacity .08s; }
+.axis text { fill: var(--muted); font: 11px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+.axis line, .grid line { stroke: var(--rule); }
+/* diff cards */
+.pair { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; margin: 12px 0; padding: 10px 16px 12px; }
+.pair header { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; font: 13px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; margin-bottom: 6px; }
+.pair .num { font-weight: 700; color: var(--accent); } .pair .num.alt { color: var(--ink2); }
+.pair .arrow, .pair .sig { color: var(--muted); }
+.pair .sim { margin-left: auto; color: var(--muted); }
+.pair .tag { background: var(--accent-soft); color: var(--accent); border-radius: 10px; padding: 0 8px; font-size: 11px; font-weight: 600; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .cols { grid-template-columns: 1fr; } .pair .sim { margin-left: 0; } }
+.cols p { margin: 2px 0 0; font-size: 15.5px; line-height: 1.55; }
+.lbl { font: 600 11px/1.4 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+del { background: var(--del); color: var(--del-ink); text-decoration: line-through; text-decoration-thickness: 1px; border-radius: 3px; padding: 0 2px; }
+ins { background: var(--ins); color: var(--ins-ink); text-decoration: none; border-radius: 3px; padding: 0 2px; }
+.sigtxt { font-style: italic; color: var(--muted); margin-left: 6px; }
+.legend { display: flex; gap: 14px; flex-wrap: wrap; font: 13px -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; color: var(--muted); }
+.cipher { font: 14px/1.7 ui-monospace, Menlo, monospace; }
+footer { margin-top: 50px; color: var(--muted); font-size: 13.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Logopandecteision: 1653 vs 1834</h1>
+<p class="sub">Collation of Sir Thomas Urquhart's <i>Logopandecteision</i> (London, 1653) with the text reprinted in <i>The Works of Sir Thomas Urquhart of Cromarty</i> (Edinburgh: Maitland Club, 1834), focusing on the Proquiritations and the Cyphral Distich. Prepared 26 September 2026.</p>
+
+<div class="answers">
+  <div class="answer">
+    <div class="q">Are the Proquiritations unique to the 1834 reprint?</div>
+    <div class="a">No — but the 1834 version is a different, revised text.</div>
+    <p>All 32 Proquiritations, with the same 32 signature initials and the same introductory "Algebraical Hexastick", are printed in the 1653 edition. In the 1834 reprint they appear in a <b>different order</b> (only №18, 24, 25, 31, 32 keep their position) and are <b>substantially reworded</b> — on average only about 74% of the word sequence is shared (range 30–97%).</p>
+  </div>
+  <div class="answer">
+    <div class="q">Is the Cyphral Distich only in the reprint?</div>
+    <div class="a">In every source examined here, yes: it first appears in the 1834 reprint (p. 417).</div>
+    <p>The 1653 copy examined ends Proquiritation 32 with a row of ornaments, the <i>Parva peto</i> couplet, <i>FINIS</i>, and the errata. There is no Distich, no "Of carping Zoil…" verse, and no first Postscript paragraph. Only one 1653 copy was examined (the British Library copy filmed for Early English Books); other surviving copies have not been checked.</p>
+  </div>
+  <div class="answer">
+    <div class="q">Do we know that Urquhart wrote the revised Proquiritations and the Distich?</div>
+    <div class="a">No — it is not established either way.</div>
+    <p>The Distich decodes only against the <i>revised</i> 1834 Proquiritations, so whoever composed it also wrote, or at least had in hand, that revised text. The 1834 editors say they "reprinted from the original editions" and mention no variant. The internal evidence (below) fits 1652–53 well, but it cannot rule out a later hand. The question can only be settled by finding a 1653 copy that contains the revised leaves.</p>
+  </div>
+</div>
+
+<h2>Sources examined</h2>
+<div class="tablewrap"><table>
+<tr><th>Source</th><th>What it is</th><th>Relevant contents</th></tr>
+<tr><td><code>bim_early-english-books-1641-1700_logopandecteision…1653.pdf</code></td><td>Microfilm (Early English Books 1641–1700; digitised by the Internet Archive) of a 1653 copy — identified by others as the British Library copy; EEBO-TCP text A64608. Printed for Giles Calvert and Richard Tomlins, London, 1653. 165 PDF pages.</td><td>Proquiritations on PDF pp. 155–162; ends with <i>Parva peto</i>, FINIS, errata (pp. 163–165).</td></tr>
+<tr><td><code>Works_of_Sir_Thomas_Urquhart_1834.pdf</code></td><td>Google Books scan (id eU0JAAAAQAAJ) of the Maitland Club edition, Edinburgh 1834, "reprinted from the original editions".</td><td><i>Logopandecteision</i> on pp. 297–419; Proquiritations pp. 412–416; Cyphral Distich p. 417; Postscript pp. 418–419.</td></tr>
+<tr><td><code>worksofsirthomas00mait.pdf</code></td><td>A second, independent scan of the same 1834 edition (Internet Archive).</td><td>Also contains "THE CYPHRAL DISTICH" — the Distich is not an artefact of one copy.</td></tr>
+<tr><td><code>Scottish Notes and Queries.pdf</code></td><td>Vol. XII (July 1898 – June 1899).</td><td>Query 1208, "Cypher": a reader prints the Distich and its verse, found "in an old volume", and asks for a solution. No reply is indexed in this volume.</td></tr>
+</table></div>
+
+<h2>Whole-book comparison</h2>
+<p>Apart from the ending, the 1834 reprint follows the 1653 text in the same sequence from title page to errata preface. Each 1834 page was matched to the 1653 pages by shared four-word sequences, after normalising spelling (long-s, u/v, i/j) on both sides. The chart shows the share of each 1834 page's word sequences that are also found in the 1653 text.</p>
+<div class="card chart" id="chart"><div class="tip" id="tip"></div></div>
+<p class="note">How to read the scores: the 1653 text comes from rough machine OCR of microfilm, so even identical pages typically score only 0.35–0.6. Low scores elsewhere in the book — the tables of contents, prefaces, Latin verse and pages with many marginal notes — are OCR noise, not textual differences. Spot checks against the page images confirmed this (e.g. the Latin poems on 1834 pp. 338 and 370 match 1653 PDF pp. 54 and 96 line for line). The shaded band is where the texts really do diverge. This method finds added, missing or moved passages. It cannot detect single-word variants in the body text; those would need a proofread transcription of the 1653 edition.</p>
+
+<h3>Differences found</h3>
+<div class="tablewrap"><table>
+<tr><th>Location</th><th>1653</th><th>1834</th></tr>
+<tr><td>Proquiritations: introduction</td><td>"Seeing the end of this fore-going Tractate…"; Hexastick opens "Of Postulata's a sursolid"</td><td>"Seeing the scope and chief end of this foregoing Tractate…"; "Of Postulatas a sursolid"</td></tr>
+<tr><td>Proquiritations 1–32</td><td>One order (begins with A. S., "That he, whose good name…")</td><td>Reordered (begins with K. F., "Seeing, from the creation of the world…") and extensively reworded — see the order table and the side-by-side text below</td></tr>
+<tr><td>Closing formulas</td><td>24 of 32 end "…is the desire of"; №32: "the unanimous <b>desire</b> of all the good persons…"</td><td>Spread across desire (9), wish (5), request (5), opinion (4), suit (3), expectation (3), hope (2); №32 then lists them: "the unanimous desire, wish, request, suit, opinion, hope, and expectation…"</td></tr>
+<tr><td>After №32</td><td>Ornaments → <i>Parva peto</i> + "Englished thus" → FINIS</td><td><b>THE CYPHRAL DISTICH</b> (64 numbers) + six lines of verse ("Of carping Zoil and despightful Momus…") → <i>Parva peto</i> → FINIS</td></tr>
+<tr><td>Postscript</td><td>Only the errata preface ("Though in this almost extemporary Treatise…") followed by the errata table</td><td>An extra first paragraph saying that the "supplemental or interstitiary verses" were written in the Author's absence by a friend acting as Corrector of the press, with the dateline "London, February 5, 1652 / 15, 1653" (old style / new style); then the errata preface</td></tr>
+<tr><td>Errata</td><td>Full errata table (PDF pp. 164–165)</td><td>Omitted. An editorial note says the errata "have been corrected in the text" (except the motto's <i>credere</i> → <i>cedere</i>)</td></tr>
+<tr><td>Latin poem, Book 4 (1834 p. 370)</td><td>The copy has a handwritten correction: a misprinted line struck through, "namq[ue] ira" written in the margin</td><td>Prints the corrected reading, "Namque ira nunquam numinis…" (consistent with the editors applying corrections)</td></tr>
+<tr><td>Front matter</td><td>Title page as printed 1653</td><td>Maitland Club title, editorial introduction (biography, list of works), facsimile portraits. The introduction mentions a unique Glover portrait of Urquhart surviving only in a copy of <i>Logopandecteision</i> at Craigston</td></tr>
+</table></div>
+
+<h2>The Proquiritations</h2>
+<h3>How the order changed</h3>
+<p>The 32 items are a pure permutation: every signature in one edition matches exactly one in the other. The only differences in the signatures are "D. I." for "D. J." and "P. Oi." for "P. O.". The Distich follows the <b>1834</b> order: the <i>i</i>-th number points into the <i>i</i>-th 1834 Proquiritation.</p>
+<details class="card"><summary class="sans">Show the 1653 → 1834 order table</summary>
+<div class="tablewrap"><table><tr><th>1653 №</th><th></th><th>1834 №</th><th>Signed</th><th>1834 opening</th></tr><tr><td>1</td><td class='arr'>→</td><td><a href='#p13'>13</a></td><td>A. S.</td><td>That he whose good name is like to be eternized to following a…</td></tr><tr><td>2</td><td class='arr'>→</td><td><a href='#p4'>4</a></td><td>B. H.</td><td>That to the overthrow of equity in the person of the Author, t…</td></tr><tr><td>3</td><td class='arr'>→</td><td><a href='#p7'>7</a></td><td>D. J.</td><td>That they who look meerly to the present time, without any reg…</td></tr><tr><td>4</td><td class='arr'>→</td><td><a href='#p10'>10</a></td><td>Ai. Bs.</td><td>That outlandish nations, where the Author’s fame dwells advant…</td></tr><tr><td>5</td><td class='arr'>→</td><td><a href='#p8'>8</a></td><td>E. G.</td><td>That those who, long before the distractions of Scotland, had …</td></tr><tr><td>6</td><td class='arr'>→</td><td><a href='#p12'>12</a></td><td>Ei. Z.</td><td>Seeing the Author&#x27;s treatises are conducible to posterity, for…</td></tr><tr><td>7</td><td class='arr'>→</td><td><a href='#p1'>1</a></td><td>K. F.</td><td>Seeing, from the creation of the world it hath pleased the Aut…</td></tr><tr><td>8</td><td class='arr'>→</td><td><a href='#p11'>11</a></td><td>V. Fs.</td><td>Seeing there is none, considering the relations and tyes where…</td></tr><tr><td>9</td><td class='arr'>→</td><td><a href='#p15'>15</a></td><td>Wh. Y.</td><td>Seeing the Author hath been still faithful to his trust, never…</td></tr><tr><td>10</td><td class='arr'>→</td><td><a href='#p9'>9</a></td><td>X. Ya.</td><td>Seeing he is born to the profit of few, who thinketh onely on …</td></tr><tr><td>11</td><td class='arr'>→</td><td><a href='#p14'>14</a></td><td>Gh. En.</td><td>That the Author&#x27;s family being one of the greatest antiquity i…</td></tr><tr><td>12</td><td class='arr'>→</td><td><a href='#p5'>5</a></td><td>Yo. Bn.</td><td>That the Shire of Cromartie, which ever from the beginning hat…</td></tr><tr><td>13</td><td class='arr'>→</td><td><a href='#p16'>16</a></td><td>T. Wi.</td><td>That the power now in being will not permit that to be exposed…</td></tr><tr><td>14</td><td class='arr'>→</td><td><a href='#p6'>6</a></td><td>Bu· Ts.</td><td>That the Author being as a clear spark from whence gleameth th…</td></tr><tr><td>15</td><td class='arr'>→</td><td><a href='#p17'>17</a></td><td>Wo. Kn.</td><td>The Author having been very often, with an applause hinc inde,…</td></tr><tr><td>16</td><td class='arr'>→</td><td><a href='#p21'>21</a></td><td>V. Ye.</td><td>That the Author&#x27;s aversness from acknowledging an ecclesiastic…</td></tr><tr><td>17</td><td class='arr'>→</td><td><a href='#p22'>22</a></td><td>Q. O.</td><td>There being very few gentlemen in his condition, who to the pr…</td></tr><tr><td>18</td><td class='arr'>→</td><td><a href='#p18'>18</a></td><td>C. W.</td><td>That the reasons deduced by the Author in the above written Tr…</td></tr><tr><td>19</td><td class='arr'>→</td><td><a href='#p20'>20</a></td><td>L. Ch.</td><td>There being none in Scotland less covetous then he, nor more a…</td></tr><tr><td>20</td><td class='arr'>→</td><td><a href='#p19'>19</a></td><td>M. Gs.</td><td>Seeing the Author’s unwillingness to pin his faith implicitly …</td></tr><tr><td>21</td><td class='arr'>→</td><td><a href='#p23'>23</a></td><td>Du. Th.</td><td>That the exemplary civility of the Author, for being apt to ha…</td></tr><tr><td>22</td><td class='arr'>→</td><td><a href='#p3'>3</a></td><td>N. Wa.</td><td>Seeing the covenanters, who are at this time accounted the Sta…</td></tr><tr><td>23</td><td class='arr'>→</td><td><a href='#p2'>2</a></td><td>P. O.</td><td>Seeing the grant of what is demanded in this Treatise can no w…</td></tr><tr><td>24</td><td class='arr'>→</td><td><a href='#p24'>24</a></td><td>Au. Ps.</td><td>That sublime, natural, and moral philosophy, mathematicks, poe…</td></tr><tr><td>25</td><td class='arr'>→</td><td><a href='#p25'>25</a></td><td>Gu. Du.</td><td>Seeing many in all the corners almost of this Island live at e…</td></tr><tr><td>26</td><td class='arr'>→</td><td><a href='#p27'>27</a></td><td>Tm. Ou.</td><td>As the overthrow of vice should be the establishment of vertue…</td></tr><tr><td>27</td><td class='arr'>→</td><td><a href='#p26'>26</a></td><td>Yi. Pn.</td><td>Seeing the Author’s designes have been for these many yeers, t…</td></tr><tr><td>28</td><td class='arr'>→</td><td><a href='#p29'>29</a></td><td>Gn. We.</td><td>As the love of goodness more then money, deserveth a larger in…</td></tr><tr><td>29</td><td class='arr'>→</td><td><a href='#p30'>30</a></td><td>Tu. J.</td><td>Seeing there are many gentlemen of considerable estates, who, …</td></tr><tr><td>30</td><td class='arr'>→</td><td><a href='#p28'>28</a></td><td>R. Yu.</td><td>That the vexation uncessantly for these ten yeers past, sustai…</td></tr><tr><td>31</td><td class='arr'>→</td><td><a href='#p31'>31</a></td><td>Wu. Fn.</td><td>That a plenary grant of the Author’s demands, after the manner…</td></tr><tr><td>32</td><td class='arr'>→</td><td><a href='#p32'>32</a></td><td>Tn. Vs.</td><td>That this is the unanimous desire, wish, request, suit, opinio…</td></tr></table></div>
+</details>
+
+<h3>Does the cipher work on the 1653 text?</h3>
+<p>No. Applying the same rule (number <i>n</i> in position <i>i</i> → first letter of word <i>n</i> of Proquiritation <i>i</i>) to the 1653 text gives nonsense:</p>
+<div class="card cipher">1653: NTMTMNDN·OHTISEABRPTTSGSNTAATVTD<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OSOTHMOSTTTBHPBTHRIPFSWFLVWTABV·<br>1834: OGODUPHOLDKINGCHARLSTHESECONDAND<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MAKEHIMTHESUPREMERULEROFTHISLAND</div>
+<p class="note">(· = the number is larger than the paragraph's word count.) The Distich was therefore built against the revised text: its order, and its word counts. The revision and the cipher belong together.</p>
+
+<h3>What the revision changed</h3>
+<ul class="ev">
+  <li><b>Fewer appeals to "the State".</b> In 1653 most items ask "the State", "the Conqueror", "the noblest State in the world" or "the State of England" to act. The 1834 text mostly substitutes neutral phrases: "the present authority", "the power now in being", "any supreme authority of that nation", "those in whose power it is".</li>
+  <li><b>Explicit political details removed.</b> Gone are "the most of Scotland is subdued… by the Conqueror" (1653 №5), "would at Sterling have debarred him… his going to Worcester" (1653 №20), and "the English now inhabiting Scotland" (1653 №27).</li>
+  <li><b>New period details added.</b> 1834 №11 asks that "his person no longer [be] detained as a prisoner of war". Urquhart was captured at Worcester in 1651. 1834 №3 names "the covenanters, who are at this time accounted the State's adversaries". 1834 №17 speaks of long acquaintance with "many choice English gentlemen".</li>
+  <li><b>Stylistic expansion.</b> Most 1834 items are longer, add doublets ("be not quenched and quite extinguished"), and vary the closing formula, which №32 then sums up.</li>
+</ul>
+
+<h3>Side-by-side text (1834 order)</h3>
+<div class="legend"><span><del>struck</del> = only in 1653</span><span><ins>highlighted</ins> = only in 1834</span><span>Word matching ignores spelling (long-s, u/v, i/j) and punctuation.</span></div>
+
+<article class="pair" id="p1">
+  <header><span class="num">1834 №1</span><span class="arrow">⇄</span><span class="num alt">1653 №7</span>
+    <span class="sig">signed K. F.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">91% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing from the creation of the world, it hath pleased the Author to deduce his extraction, without baulking since the <del>dayes</del> of Adam, so much as one of his progenitors on the paternal <del>side, That</del> the <del>State vouchsafe to</del> put <del>him</del> in a consistence of protracting his posterity through as many hereditary successors in a lineal descent, according to the contents of the preceding Tractate, is the desire of <span class="sigtxt">K. F.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 412</div><p>Seeing, from the creation of the world it hath pleased the Author to deduce his extraction, without baulking since the <ins>days</ins> of Adam so much as one of his progenitors on the paternal <ins>side—that</ins> the <ins>said Author may be</ins> put in a consistence of protracting his posterity through as many hereditary successors in a lineal descent, according to the contents of the preceding Tractate, is the desire of <span class="sigtxt">K. F.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p2">
+  <header><span class="num">1834 №2</span><span class="arrow">⇄</span><span class="num alt">1653 №23</span>
+    <span class="sig">signed P. O. (1653: P. Oi.)</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">85% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the grant of what is demanded in this Treatise, can no <del>ways</del> introduce a preparative of any dangerous consequence, as hath been evidently shewn in the <del>above-written Introduction, That the State</del> may be <del>pleased,</del> without any suspicion of being troubled upon the like grounds by any other of <del>his Compatriots,</del> condescend to his desires therein, is the hearty wish of <span class="sigtxt">P. Oi.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 412</div><p>Seeing the grant of what is demanded in this Treatise can no <ins>way</ins> introduce a preparative of any dangerous consequence, as hath been evidently shewn in the <ins>above written introduction—that it</ins> may be <ins>thought expedient,</ins> without any suspicion of being troubled upon the like grounds by any other of <ins>this Island, to</ins> condescend to his desires therein, is the hearty wish of <span class="sigtxt">P. O.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p3">
+  <header><span class="num">1834 №3</span><span class="arrow">⇄</span><span class="num alt">1653 №22</span>
+    <span class="sig">signed N. Wa.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">85% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the States adversaries <del>had</del> kept some three yeers ago a Garison in the Authors house for <del>twelve months together,</del> and that for these many yeers past, by several exactions, tolerated plunderings, and other <del>such-like</del> unmerciful dealings, without any just occasion given, his rents have been made almost totally <del>unserviceable, that</del> he may now, for his greater peace in the future, be exonered of the English Garison <del>that</del> is in his house; and after its removal, have himself fully setled in his own, with all <del>manner</del> of ease and <del>tranquillity,</del> is the humble desire of <span class="sigtxt">N. Wa.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>Seeing <ins>the covenanters, who are at this time accounted</ins> the State’s adversaries, kept, some three yeers ago, a garison in the Author&#x27;s house for <ins>the space of a twelve-month ;</ins> and that, for these many yeers past, by several exactions, tolerated plunderings, and other <ins>such like</ins> unmerciful dealings, without any just occasion given, his rents have been made almost totally <ins>unserviceable—that</ins> he may now, for his greater peace in the future, be exonered of the English garison <ins>which</ins> is in his house, and, after its removal, have himself fully setled in his own, with all <ins>maner</ins> of ease and <ins>tranquility,</ins> is the humble desire of <span class="sigtxt">N. Wa.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p4">
+  <header><span class="num">1834 №4</span><span class="arrow">⇄</span><span class="num alt">1653 №2</span>
+    <span class="sig">signed B. H.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">81% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That to the overthrow of Equity in the person of the Author, the <del>State suffer</del> not <del>any Law of theirs</del> to become the executioner of the spleen and covetousness of his implacable adversaries, is the <del>humble</del> desire of <span class="sigtxt">B. H.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That to the overthrow of equity in the person of the Author, the <ins>rigour of a wrested law be</ins> not <ins>permitted</ins> to become the executioner of the spleen and covetousness of his implacable adversaries, is the <ins>earnest</ins> desire of <span class="sigtxt">B. H.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p5">
+  <header><span class="num">1834 №5</span><span class="arrow">⇄</span><span class="num alt">1653 №12</span>
+    <span class="sig">signed Yo. Bn.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">83% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the shire of <del>Cromarty,</del> which ever from the beginning hath been the receptacle of the most harmless inhabitants, be not bestowed on any other then the Author, whose predecessors, for uprightness and integrity of carriage, <del>had</del> not <del>their equals in that</del> Nation, is the desire of <span class="sigtxt">Yo. Bn.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That the Shire of <ins>Cromartie,</ins> which ever from the beginning hath been the receptacle of the most harmless inhabitants, be not bestowed on any other then the Author, whose predecessors, for uprightness and integrity of carriage, <ins>were</ins> not, <ins>if equalled, inferiour to the best of any</ins> nation, is the <ins>longing</ins> desire of <span class="sigtxt">Yo. Bn.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p6">
+  <header><span class="num">1834 №6</span><span class="arrow">⇄</span><span class="num alt">1653 №14</span>
+    <span class="sig">signed Bu· Ts. (1653: Bu. Ts.)</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">95% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the Author being <del>but</del> as a clear spark, from whence gleameth the <del>most</del> of the pure light that is to be seen of any learned invention in that Country of Scotland, it be not quenched and quite extinguished, by the foul and black water of an usurious puddle drunk up there, by the natives almost of all sorts, is the humble request of <span class="sigtxt">Bu. Ts.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That the Author being as a clear spark from whence gleameth the <ins>greatest part</ins> of the pure light that is to be seen of any learned invention in that country of Scotland, it be not quenched and quite extinguished by the foul and black water of an usurious puddle, drunk up there by <ins>too many of</ins> the natives almost of all sorts, is the humble request of <span class="sigtxt">Bu· Ts.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p7">
+  <header><span class="num">1834 №7</span><span class="arrow">⇄</span><span class="num alt">1653 №3</span>
+    <span class="sig">signed D. J.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">87% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That they who look meerly to the present time, without any regard of the future, be not permitted <del>by the State</del> to deprive him of his means, who, for the <del>weal</del> of after-ages, <del>spends</del> his <del>time</del> most vertuously, is the desire of <span class="sigtxt">D. I.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That they who look meerly to the present time, without any regard of the future, be not permitted to deprive him of his means, who for the <ins>good</ins> of after-ages <ins>employs</ins> his <ins>spare hours</ins> most vertuously, is the <ins>true</ins> desire of <span class="sigtxt">D. J.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p8">
+  <header><span class="num">1834 №8</span><span class="arrow">⇄</span><span class="num alt">1653 №5</span>
+    <span class="sig">signed E. G.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">70% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That <del>seeing</del> the <del>most</del> of Scotland <del>is subdued, those that</del> had <del>long before that</del> enslaved themselves to the <del>most</del> abominable vice of oppressing others, be not permitted by <del>the Conqueror</del> to meddle with the estate of him <del>that</del> never injured any, is the earnest suit of <span class="sigtxt">E. G.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That <ins>those who, long before</ins> the <ins>distractions</ins> of Scotland, had enslaved themselves to the abominable vice of oppressing others, be not permitted, <ins>now that</ins> by <ins>their means that country is brought lowe,</ins> to meddle with the estate of him <ins>who</ins> never injured any, is the earnest suit of <span class="sigtxt">E. G.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p9">
+  <header><span class="num">1834 №9</span><span class="arrow">⇄</span><span class="num alt">1653 №10</span>
+    <span class="sig">signed X. Ya.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">87% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing he is born to the profit of <del>a</del> few, who thinketh onely on the people of his age, and to that of fewer, whose thoughts exceed not the reach of his own proper <del>interest, That the illustrious State shall consider</del> of the difference betwixt the Authors competitors of dark and narrow projects, and his <del>owne</del> splendid and ample endeavours, comprehensive by appearance of the whole latitude of time, is the <del>humble</del> desire of <span class="sigtxt">X. Ya.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>Seeing he is born to the profit of few, who thinketh onely on the people of his age <ins>;</ins> and to that of fewer, whose thoughts exceed not the reach of his own proper <ins>interest—that due consideration may be had</ins> of the difference betwixt the Author&#x27;s competitors of dark and narrow projects, and his <ins>own</ins> splendid and ample endeavours, comprehensive by appearance of the whole latitude of time, is the <ins>strong</ins> desire of <span class="sigtxt">X. Ya.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p10">
+  <header><span class="num">1834 №10</span><span class="arrow">⇄</span><span class="num alt">1653 №4</span>
+    <span class="sig">signed Ai. Bs.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">30% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That outlandish Nations, with <del>whom</del> the <del>Author hath much acquaintance, may, for the States favour to him, when they shall restore</del> him to his own, <del>after the above-written manner, offer up a most cordial sacrifice to their Authority,</del> is the <del>humble desire</del> of <span class="sigtxt">Ai. Bs.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413</div><p>That outlandish nations, <ins>where the Author’s fame dwells advantagiously</ins> with <ins>an expansed reputation, will most highly extol</ins> the <ins>restorers of</ins> him to his own, <ins>for an act of perfect and well-principled generosity,</ins> is the <ins>confident opinion</ins> of <span class="sigtxt">Ai. Bs.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p11">
+  <header><span class="num">1834 №11</span><span class="arrow">⇄</span><span class="num alt">1653 №8</span>
+    <span class="sig">signed V. Fs.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">51% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the <del>most innocent</del> of <del>the Scotish Nation is no</del> more blameless, then he, <del>that</del> his sequestration <del>should be</del> taken off, and <del>a considerable acknowledgment</del> allowed him, for the great loss he sustained by the rigour of the subsequestrator, is the desire of <span class="sigtxt">V. Fs.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 413–414</div><p>Seeing <ins>there is none, considering</ins> the <ins>relations and tyes whereunto the Author by nature and duty was bound, can with any shew</ins> of <ins>reason be accounted</ins> more blameless then <ins>he—that</ins> he <ins>have</ins> his sequestration taken off, <ins>his person no longer detained as a prisoner of war,</ins> and <ins>some competent acknowledgement</ins> allowed him for the great loss he <ins>hath</ins> sustained by the rigour of the <ins>unmerciful, not to say knavish,</ins> subsequestrator, is the <ins>real</ins> desire of <span class="sigtxt">V. Fs.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p12">
+  <header><span class="num">1834 №12</span><span class="arrow">⇄</span><span class="num alt">1653 №6</span>
+    <span class="sig">signed Ei. Z.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">65% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the Authors Treatises are conducible to posterity, for the <del>weal</del> whereof the <del>now-established Authority hath undergone so many difficulties, that for its</del> respect to <del>them,</del> and <del>hopes</del> of their retribution <del>of</del> praises, he may be better rewarded, then if he were a <del>present-time-server,</del> without consideration of the future, is the <del>desire</del> of <span class="sigtxt">Ei. Z.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>Seeing the Author&#x27;s treatises are conducible to posterity, for the <ins>benefit</ins> whereof the <ins>most splendid states and potentates do usually undergo great hazards and difficulties—that out of</ins> respect to <ins>succeeding ages,</ins> and <ins>hope</ins> of their <ins>due</ins> retribution <ins>in</ins> praises, he may be better rewarded then if he were a <ins>present time-server,</ins> without consideration of the future, is the <ins>humble suit</ins> of <span class="sigtxt">Ei. Z.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p13">
+  <header><span class="num">1834 №13</span><span class="arrow">⇄</span><span class="num alt">1653 №1</span>
+    <span class="sig">signed A. S.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">56% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That he, whose good name is like to be eternized <del>in</del> the <del>grave, should</del> not in his life-time <del>be neglected</del> by the <del>State</del> of an immortal fame, is the hope of <span class="sigtxt">A. S.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>That he whose good name is like to be eternized <ins>to following ages, after that unto nature he hath paid</ins> the <ins>due which mortality will require of him, shall</ins> not in his life-time <ins>have his just demands denied</ins> by <ins>that authority whose representators upon equity promise to lay</ins> the <ins>foundation</ins> of an immortal fame, is the hope of <span class="sigtxt">A. S.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p14">
+  <header><span class="num">1834 №14</span><span class="arrow">⇄</span><span class="num alt">1653 №11</span>
+    <span class="sig">signed Gh. En.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">78% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>The Authors family being of the greatest antiquity in Scotland, and by an especial providence <del>till</del> this time preserved from that utter subversion intended by the iniquity of his covetous and dissembled enemies, should <del>in my opinion</del> obtain a <del>larger</del> measure of protection <del>from the Sate, then</del> any other race in <del>that land,</del> and himself favoured with the grant of all that in <del>this</del> foregoing Treatise is demanded by him, <del>(which that it be so)</del> is the <del>humble desire</del> of <span class="sigtxt">Gh. En.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p><ins>That</ins> the Author&#x27;s family being <ins>one</ins> of the greatest antiquity in Scotland, and by an especial providence <ins>until</ins> this time preserved from that utter subversion intended by the iniquity of his covetous and dissembled enemies, should obtain, <ins>cæteris paribus, as large</ins> a measure of protection <ins>as</ins> any other race in <ins>the whole Isle of Britain,</ins> and himself favoured with the grant of all that in <ins>his</ins> foregoing Treatise is demanded by him, is the <ins>real wish</ins> of <span class="sigtxt">Gh. En.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p15">
+  <header><span class="num">1834 №15</span><span class="arrow">⇄</span><span class="num alt">1653 №9</span>
+    <span class="sig">signed Wh. Y.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">88% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the Author hath been still faithful to his trust, never culpable of <del>Parole-breaking,</del> but always true in every word and <del>action, That</del> the <del>generosity</del> of the <del>State</del> will not suffer him to be exposed to the inhumane dealing of those Country-men of his, who for their <del>owne</del> ends, make no bones of being guilty of greater breaches, is the <del>desire</del> of <span class="sigtxt">Wh. Y.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>Seeing the Author hath been still faithful to his trust, never culpable of <ins>parol-breaking,</ins> but always true in every word and <ins>action—that</ins> the <ins>discretion</ins> of the <ins>present authority</ins> will not suffer him to be exposed to the inhumane dealing of those countrymen of his who for their <ins>own</ins> ends make no bones of being guilty of greater breaches, is the <ins>hearty wish</ins> of <span class="sigtxt">Wh. Y.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p16">
+  <header><span class="num">1834 №16</span><span class="arrow">⇄</span><span class="num alt">1653 №13</span>
+    <span class="sig">signed T. Wi.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">84% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the <del>noblest State</del> in <del>the world,</del> will not <del>now</del> permit that to be exposed to sale, which never hitherto was made vendible in any preceding age, and that the Lands and shire of <del>Cromarty,</del> (which by none that ever breathed were either bought or sold) should by a grant <del>from the State,</del> be in the heritable possession of the Author, as <del>nearest</del> in line to the <del>aboriginary</del> owner, is the earnest <del>desire</del> of <span class="sigtxt">T. Wi.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>That the <ins>power now</ins> in <ins>being</ins> will not permit that to be exposed to sale which never hitherto was made vendible in any preceding age, and that the lands and Shire of <ins>Cromartie,</ins> which by none that ever breathed were either bought or sold, should, by a <ins>peculiar</ins> grant <ins>paramount,</ins> be in the heritable possession of the Author, as <ins>neerest</ins> in line <ins>and by descent</ins> to the <ins>aborigenary</ins> owner, is the earnest <ins>request</ins> of <span class="sigtxt">T. Wi.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p17">
+  <header><span class="num">1834 №17</span><span class="arrow">⇄</span><span class="num alt">1653 №15</span>
+    <span class="sig">signed Wo. Kn.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">46% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>The <del>Authors education</del> having been <del>more</del> abroad <del>then at home, whereof England may duely claim no small share; that</del> by <del>the State</del> of that Nation, he should be singled out to suffer <del>more then</del> the disaffecters of both their rule and country-men, is not the expectation of <span class="sigtxt">Wo. Kn.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>The <ins>Author</ins> having been <ins>very often, with an applause hinc inde, conversant both</ins> abroad <ins>and within the four seas, and sometimes for several months together, without the variety of any other company, with many choice English gentlemen—that</ins> by <ins>any supreme authority</ins> of that nation he should be singled out to suffer <ins>as much as</ins> the <ins>most inveterate</ins> disaffecters, <ins>out of a national antipathy,</ins> of both their rule and country-men, is not the expectation of <span class="sigtxt">Wo. Kn.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p18">
+  <header><span class="num">1834 №18</span><span class="arrow">⇄</span><span class="num alt">1653 №18</span>
+    <span class="sig">signed C. W.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">78% same wording</span>
+    </header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the reasons deduced by the Author in the <del>above-written</del> Treatise, why he should not be made <del>lyable</del> to any other debt then that of his own contracting, may be so relished by <del>the supream authority of the Land,</del> as that thereby he may be exonered of any other burthen, is the <del>humble desire</del> of <span class="sigtxt">C. W.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414</div><p>That the reasons deduced by the Author in the <ins>above written</ins> Treatise, why he should not be made <ins>liable</ins> to any other debt then that of his own contracting, may be so relished by <ins>[those] in whose power it is to make them effectual,</ins> as that thereby he may be <ins>forthwith</ins> exonered of any other burthen, is the <ins>earnest wish</ins> of <span class="sigtxt">C. W.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p19">
+  <header><span class="num">1834 №19</span><span class="arrow">⇄</span><span class="num alt">1653 №20</span>
+    <span class="sig">signed M. Gs.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">42% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the Authors unwillingness to pin his faith <del>implicitely</del> to the sleeve of the <del>Ministry, would at Sterling have debarred</del> him <del>(although otherwaies he had been willing)</del> from <del>being admitted to any charge</del> in <del>the Scotish army against the English;</del> and that therefore <del>his going to Worcester would</del> by all appearance <del>seem rather to have proceeded from his desire to shun old adversaries at home, then to acquire new ones abroad, that he</del> should be looked upon with <del>a</del> more amicable eye <del>from the State,</del> is the humble opinion of <span class="sigtxt">M. Gs.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 414–415</div><p>Seeing the Author’s unwillingness to pin his faith <ins>implicitly</ins> to the sleeve of the <ins>ministery, or to the single backless tenets in Ecclesiasticis of any church-man whatsoever, did exclude</ins> him from <ins>military charges</ins> in <ins>their covenanting armies ;</ins> and that therefore, <ins>having at no time been under their banner, he</ins> by all appearance should be looked upon with <ins>the</ins> more amicable eye <ins>by those who did reduce their unlimited power,</ins> is the humble opinion of <span class="sigtxt">M. Gs.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p20">
+  <header><span class="num">1834 №20</span><span class="arrow">⇄</span><span class="num alt">1653 №19</span>
+    <span class="sig">signed L. Ch.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">88% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p><del>Their</del> being none in Scotland less covetous then he, nor more averse from the excessive love of <del>money, that</del> it may please the <del>State</del> so to protect him, as that he be not made a prey to the most avaritious men of any, and such as respect Silver and Gold beyond whatever else is most precious in the world, is the <del>humble desire</del> of <span class="sigtxt">L. Ch.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p><ins>There</ins> being none in Scotland less covetous then he, nor more averse from the excessive love of <ins>money—that</ins> it may please <ins>those, in whom</ins> the <ins>power of protection is,</ins> so to protect him, as that he be not made a prey to the most avaritious men of any, and such as respect silver and gold beyond whatever else is most precious in the world, is the <ins>request</ins> of <span class="sigtxt">L. Ch.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p21">
+  <header><span class="num">1834 №21</span><span class="arrow">⇄</span><span class="num alt">1653 №16</span>
+    <span class="sig">signed V. Ye.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">72% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the Authors <del>unwillingness to acknowledg</del> an Ecclesiastical <del>soveraigntie</del> above the <del>supream established Civil</del> authority, be not a motive to deal more rigorously with him, then with <del>any of</del> those <del>other his compatriots, that</del> turn tail to every government, without affection to any, is the <del>desire</del> of <span class="sigtxt">V. Ye.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p>That the Author&#x27;s <ins>aversness from acknowledging</ins> an ecclesiastical <ins>soveraignty</ins> above the <ins>lawful supreme</ins> authority <ins>in civilibus,</ins> be not a motive to deal more rigorously with him then with those <ins>time-servers who</ins> turn tail to every government, without <ins>bearing</ins> affection to any, is the <ins>suit</ins> of <span class="sigtxt">V. Ye.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p22">
+  <header><span class="num">1834 №22</span><span class="arrow">⇄</span><span class="num alt">1653 №17</span>
+    <span class="sig">signed Q. O.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">54% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>There being <del>scarce any other Gentleman</del> in <del>Scotland,</del> who to the press so freely <del>adventureth his name as himself, that</del> the Author&#x27;s thus favouring this <del>Isle</del> with elucubrations beyond the reach of <del>most of</del> his <del>compatriots, may</del> not for his service <del>to the publick by the</del> attolerance <del>of</del> the State <del>suffer any detriment</del> by his <del>owne</del> country-men in his private <del>fortune,</del> is the desire of <span class="sigtxt">Q. O.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p>There being <ins>very few gentlemen</ins> in <ins>his condition,</ins> who to the press so freely <ins>adventure their names on subjects of any elaboured strain—that</ins> the Author&#x27;s thus favouring this <ins>Island</ins> with elucubrations beyond the reach of his <ins>competitors, be</ins> not <ins>met</ins> for <ins>that</ins> his <ins>publike</ins> service <ins>with such a permissive</ins> attolerance <ins>or connivence from</ins> the State, <ins>as might hurry upon him most grievous detriments</ins> by his <ins>own</ins> country-men in his private <ins>fortunes,</ins> is the <ins>cordial</ins> desire of <span class="sigtxt">Q. O.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p23">
+  <header><span class="num">1834 №23</span><span class="arrow">⇄</span><span class="num alt">1653 №21</span>
+    <span class="sig">signed Du. Th.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">64% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the exemplary civility of the Author, for being apt to have influence on the mindes of the rudest of his <del>kinred</del> and neighbours, even unto the remotest hills of Scotland, may perswade the <del>State, whose</del> endeavour <del>it is to bring them</del> into as neer <del>a</del> conformity <del>as may be,</del> in <del>Manners</del> and Language <del>with the natives of England,</del> to settle him, <del>without incumbrance,</del> in the inheritance of his predecessors, is the <del>desire</del> of <span class="sigtxt">Du. Th.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p>That the exemplary civility of the Author, for being apt to have influence on the mindes of the rudest of his <ins>kindred</ins> and neighbours, even unto the remotest hills of Scotland, may <ins>be of efficacy to</ins> perswade <ins>such amicable spirits at</ins> the <ins>helm of publike affairs, as would heartily</ins> endeavour <ins>the bringing of the two nations</ins> into as <ins>strict an union and</ins> neer conformity in <ins>laws, liberties, priviledges, customs, maners,</ins> and language, <ins>as is possible and expedient,</ins> to settle <ins>and stablish</ins> him in the inheritance of his predecessors, is the <ins>opinion</ins> of <span class="sigtxt">Du. Th.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p24">
+  <header><span class="num">1834 №24</span><span class="arrow">⇄</span><span class="num alt">1653 №24</span>
+    <span class="sig">signed Au. Ps.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">97% same wording</span>
+    </header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That sublime, Natural and Moral Philosophy, Mathematicks, Poesie, and many other kindes of good Literature should not be any longer supprest by the injustice of devouring and insatiable seekers ignorant of every thing that is not lucrative for the bag, is the <del>desire</del> of <span class="sigtxt">Au. Ps.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p>That sublime, natural, and moral philosophy, mathematicks, poesie, and many other kindes of good literature, should not be any longer supprest by the injustice of devouring and insatiable seekers, ignorant of every thing that is not lucrative for the bag, is the <ins>cordial request</ins> of <span class="sigtxt">Au. Ps.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p25">
+  <header><span class="num">1834 №25</span><span class="arrow">⇄</span><span class="num alt">1653 №25</span>
+    <span class="sig">signed Gu. Du.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">85% same wording</span>
+    </header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing many in <del>Scotland</del> live at ease who enjoy more of their neighbours unlawfully-acquired goods then formerly <del>was</del> their <del>own, That</del> the Author who never yet could, for the importunity of waspish seekers, and terrour of a rigorous Law, most often in the mouthes of partial men, get applied, in the most fertile yeer that was, for his own use the tenth part of his <del>rent,</del> should now, by <del>the</del> magnificence <del>of the State,</del> reap the fruits of his own, without the hazard of such terrible soakers, is the <del>earnest</del> desire of <span class="sigtxt">Gu. Du.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415</div><p>Seeing many in <ins>all the corners almost of this Island</ins> live at ease, who enjoy more of their neighbour&#x27;s unlawfully-acquired goods, then formerly <ins>they had of</ins> their <ins>own—that</ins> the Author, who never yet could, for the importunity of waspish seekers, and terrour of a rigorous law, most often in the mouthes, <ins>or at the disposure</ins> of partial men, get applied in the most fertile yeer that was, for his own use, the tenth part of his <ins>rents,</ins> should now by <ins>a paramount</ins> magnificence, reap the fruits of his own <ins>meanes,</ins> without the hazard of such terrible soakers, is the <ins>vehement</ins> desire of <span class="sigtxt">Gu. Du.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p26">
+  <header><span class="num">1834 №26</span><span class="arrow">⇄</span><span class="num alt">1653 №27</span>
+    <span class="sig">signed Yi. Pn.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">79% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing the Authors <del>designe hath</del> been these many yeers the same, in matter of furthering <del>Manufacture,</del> Commerce, with all <del>manner</del> of Trading and Negotiation with the most industrious of the <del>English now inhabiting Scotland That the State</del> will not, in favour of those that have obstructed the performance of so worthy enterprises, denude him of his just inheritance, is the <del>desire</del> of <span class="sigtxt">Yi. Pn.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 415–416</div><p>Seeing the Author’s <ins>designes have</ins> been <ins>for</ins> these many yeers, the same, in matter of furthering <ins>manufactures and</ins> commerce, <ins>together</ins> with all <ins>maner</ins> of trading and negotiation, with the most industrious of <ins>England and other nations—that</ins> the <ins>present authority</ins> will not, in favour of those that have obstructed the performance of so worthy enterprises, denude him of his just inheritance, is the <ins>real hope</ins> of <span class="sigtxt">Yi. Pn.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p27">
+  <header><span class="num">1834 №27</span><span class="arrow">⇄</span><span class="num alt">1653 №26</span>
+    <span class="sig">signed Tm. Ou.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">50% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>As the overthrow of Vice should be the establishment of <del>Vertue, That</del> the <del>conquest</del> of his opposers <del>reseat</del> the Author in his <del>own inheritance, and that the State of England do it, which professeth</del> the subdument of irregular spirits, is <del>both</del> the expectation <del>and desire</del> of <span class="sigtxt">Tm. Ou.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>As the overthrow of vice should be the establishment of <ins>vertue—that</ins> the <ins>reducing</ins> of his opposers <ins>into a more narrow sphere of action then that wherein formerly they were wont to bestir themselves, should make</ins> the Author <ins>to be reseated</ins> in <ins>the inheritance of</ins> his <ins>ancestors, by those who hitherto have professed</ins> the subdument of irregular spirits, is the <ins>confident</ins> expectation of <span class="sigtxt">Tm. Ou.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p28">
+  <header><span class="num">1834 №28</span><span class="arrow">⇄</span><span class="num alt">1653 №30</span>
+    <span class="sig">signed R. Yu.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">92% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That the vexation uncessantly for these ten yeers past sustained by the Author, from men of unsatisfiable appetites, in matter of worldly means, may not, as formerly, to the great hinderance of divulging <del>learned</del> Treatises, be any longer an impediment unto him, is the <del>earnest desire</del> of <span class="sigtxt">R. Yu.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>That the vexation uncessantly for these ten yeers past, sustained by the author from men of unsatisfiable appetites, in matter of worldly means, may not, as formerly, to the great hinderance of divulging treatises <ins>conducible to posterity,</ins> be any longer an impediment unto him, is the <ins>cordial wish</ins> of <span class="sigtxt">R. Yu.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p29">
+  <header><span class="num">1834 №29</span><span class="arrow">⇄</span><span class="num alt">1653 №28</span>
+    <span class="sig">signed Gn. We.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">58% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>As love <del>to the English Nation</del> more then <del>to their</del> money, deserveth <del>from that Government the</del> larger influence of <del>grace; so,</del> that the Authors affection to the equitable Customs, <del>&amp;</del> innate Civility of <del>that</del> Nation, being of a more generous temper then that of <del>others, who laboured their introduction for pecunial interests,</del> may be regarded with an eye of greater favour, is the <del>humble desire</del> of <span class="sigtxt">Gn. We.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>As <ins>the</ins> love <ins>of goodness</ins> more then money, deserveth <ins>a</ins> larger influence of <ins>grace—so,</ins> that the Author&#x27;s affection to the equitable customs <ins>and</ins> innate civility of <ins>the English</ins> nation, being of a more generous temper then that <ins>sullen and selfish disposition in many others, which doth no longer relish their conversation then it is found apt to shore up the advantage</ins> of <ins>some pecuniary interest,</ins> may be regarded with an eye of greater favour, is the <ins>hearty request</ins> of <span class="sigtxt">Gn. We.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p30">
+  <header><span class="num">1834 №30</span><span class="arrow">⇄</span><span class="num alt">1653 №29</span>
+    <span class="sig">signed Tu. J.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">77% same wording</span>
+    <span class="tag">moved</span></header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>Seeing there are many <del>heritors in Scotland,</del> who though <del>for being</del> actually in charge against the English, as pretended opposers of Presbytery, <del>they</del> did either <del>inrich</del> themselves, or by their levies and quarterings received great profits to the no small damage of the Country, do nevertheless enjoy their means at this time <del>(whose</del> good fortune notwithstanding <del>thereby,</del> I wish no man to envie) with as much tranquillity as <del>before; That</del> the Author, who never yet had any benefit to the prejudice of another, be placed <del>rather</del> in a better <del>then worse</del> condition <del>then</del> any of those, is the <del>desire</del> of <span class="sigtxt">Tu. J.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>Seeing there are many <ins>gentlemen of considerable estates,</ins> who, though actually in charge against the English, as pretended opposers of Presbytery, did either <ins>enrich</ins> themselves, or by their levies and quarterings <ins>in the Kirk’s service,</ins> received great profits, to the no small damage of the country, do nevertheless, <ins>and that justly too,</ins> enjoy their means at this time, <ins>which</ins> good fortune notwithstanding <ins>in them</ins> I wish no man to envie, with as much tranquillity as <ins>before—that</ins> the Author, who never yet had any benefit to the prejudice of another, be placed, <ins>if not</ins> in a better, <ins>at least, according to the rules of distributive justice, in an equal</ins> condition <ins>with</ins> any of those, is the <ins>real expectation</ins> of <span class="sigtxt">Tu. J.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p31">
+  <header><span class="num">1834 №31</span><span class="arrow">⇄</span><span class="num alt">1653 №31</span>
+    <span class="sig">signed Wu. Fn.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">88% same wording</span>
+    </header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That a plenary grant of the Authors demands, after the manner above specified in <del>the</del> Tractate of his Introduction, will prove a great encouragement to good spirits, in the prosecuting of vertuous endeavours, is the opinion of <span class="sigtxt">Wu. Fn.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>That a plenary grant of the Author’s demands, after the manner above specified in <ins>this noble</ins> Tractate of his Introduction, will prove a great encouragement to good spirits, <ins>and hinderance to none</ins> in the prosecuting of vertuous endeavours, is the <ins>stedfast and firm</ins> opinion of <span class="sigtxt">Wu. Fn.</span></p></div>
+  </div>
+</article>
+<article class="pair" id="p32">
+  <header><span class="num">1834 №32</span><span class="arrow">⇄</span><span class="num alt">1653 №32</span>
+    <span class="sig">signed Tn. Vs.</span>
+    <span class="sim" title="Word-sequence similarity after normalising spelling">85% same wording</span>
+    </header>
+  <div class="cols">
+    <div><div class="lbl">1653 (British Library copy, EEBO film)</div><p>That this is the unanimous desire of all the good persons of either <del>sex,</del> with whom, of any Nation, in whatever Country, whether at home or abroad, the Author hath been formerly acquainted, is testified by <span class="sigtxt">Tn. Vs.</span></p></div>
+    <div><div class="lbl">1834 Maitland Club reprint, p. 416</div><p>That this is the unanimous desire, <ins>wish, request, suit, opinion, hope, and expectation</ins> of all the good persons of either <ins>sexe,</ins> with whom of any nation, in whatever country, whether at home or abroad, the Author hath been formerly acquainted, is <ins>duely</ins> testified <ins>and affirmed</ins> by <span class="sigtxt">Tn. Vs.</span></p></div>
+  </div>
+</article>
+<p class="note">The 1653 text was transcribed from the microfilm page images (PDF pp. 155–162), with long-s printed as "s". The 1834 text comes from the Google Books scan, proofread against its images. Both are close readings but not diplomatic transcriptions.</p>
+
+<h2>Who wrote the revised Proquiritations and the Distich?</h2>
+<p>No document examined here settles this. The evidence:</p>
+<ul class="ev">
+  <li class="pro">The revised text is full of details that were live in 1652–53 and obscure by 1834: Urquhart held as a prisoner of war after Worcester, the covenanters "at this time accounted the State's adversaries", an English garrison in his house, the "subsequestrator" of his estates.</li>
+  <li class="pro">The Postscript that comes with it in 1834 carries a precise double-style dateline ("London, February 5, 1652 … 15, 1653"). It also describes the printing of the book (two printers, a friend acting as Corrector of the press), which matches the 1653 errata preface.</li>
+  <li class="pro">The hidden message, a prayer for Charles II as "supreme ruler", has an obvious 1653 motive: to conceal a royalist loyalty inside a petition to the Commonwealth. Encrypting it would have served little purpose in 1834.</li>
+  <li class="pro">The rewrite is integrated rather than cosmetic. The closing formulas were varied so that №32 could list all seven, and the text is consistent with the Hexastick's arithmetic of 32. That is a lot of careful work for a club editor to invent without comment.</li>
+  <li class="pro">Hurried printing by two printers, and at least one unusual copy (Craigston, with a portrait unknown elsewhere), make variant states of the final sheets plausible. Final leaves reset or replaced during printing (cancels) were common in 1650s books.</li>
+  <li class="con">No 1653 copy containing the revised Proquiritations or the Distich has been identified. The copy examined here lacks both, as do others' checks of the British Library copy and the EEBO-TCP transcription.</li>
+  <li class="con">The 1834 editors describe their text only as "reprinted from the original editions". They note one editorial change (the errata) but say nothing about a second state of the Proquiritations.</li>
+  <li class="con">Even within the 1834 text, not everything is claimed as Urquhart's: the added Postscript says the "interstitiary verses" were written by a friend. The "Of carping Zoil" verse beneath the Distich could equally come from another hand.</li>
+</ul>
+<div class="card"><b>What would settle it.</b> Examine the final gathering of other surviving 1653 copies: those listed in ESTC / Wing U138, and especially Scottish-held copies such as National Library of Scotland, Edinburgh and Glasgow Universities, and the Craigston library copy the 1834 editors used for the portrait. Look for a Proquiritations section beginning "Seeing, from the creation of the world…" (K. F.), followed by the Distich and the dated Postscript. One such copy would show that both come from Urquhart's own time. It would also make his authorship far more likely, given the Postscript's own warning about the friend's verses. The Maitland Club's records of which copy it reprinted would also help.</div>
+
+<h2>Other sources</h2>
+<ul class="ev">
+  <li><b><i>Scottish Notes and Queries</i>, vol. XII (1898–99), query 1208.</b> The Distich and its verse, printed from "an old volume" with no identification. This is an earlier appearance in print than the 1899 biography by John Willcock, which some recent commentary gives as the only surviving source. The 1834 reprint is earlier still.</li>
+  <li><b>Recent commentary (September 2026).</b> The <a href="https://www.vals.ai/blogs/fable-solves-cyphral-distich">Vals AI write-up</a> reports the decipherment and places the text in the 1834 edition. Critiques (<a href="https://github.com/reticuli-labs/panel-artifacts/blob/main/distich-refutation-2026-09-01/FINDINGS.md">Reticuli Labs findings</a>, <a href="https://lilting.ch/en/articles/claude-fable-solves-cyphral-distich">lilting.ch</a>) point out, correctly, that the British Library 1653 copy has no Distich. They do not compare the 1653 Proquiritations with the 1834 ones, and so miss that the Distich decodes only against a revised text. For coverage see <a href="https://boingboing.net/2026/09/14/fountain-pen-cyphral-distich.html">Boing Boing</a> and <a href="https://en.wikipedia.org/wiki/Logopandecteision">Wikipedia</a>. The 1653 film is on the <a href="https://archive.org/details/bim_early-english-books-1641-1700_logopandecteision-or-an_urquhart-sir-thomas_1653">Internet Archive</a>, and <a href="https://search.worldcat.org/title/logopandecteision-1653/oclc/136724">WorldCat</a> lists holdings of the 1653 edition.</li>
+</ul>
+
+<footer>Method: per-page OCR (tesseract for 1834; Internet Archive OCR for 1653), four-word overlap after spelling normalisation, then manual transcription and image checks of the Proquiritations, the ending and the low-overlap pages. All source texts are public domain.</footer>
+</div>
+
+<script>
+const DATA = [{"pdf": 323, "pg": "297", "ov": 0.36, "p53": 1}, {"pdf": 324, "pg": "298", "ov": null, "p53": null}, {"pdf": 325, "pg": "299", "ov": 0.49, "p53": 3}, {"pdf": 326, "pg": "300", "ov": 0.42, "p53": 4}, {"pdf": 327, "pg": "301", "ov": 0.51, "p53": 5}, {"pdf": 328, "pg": "302", "ov": 0.42, "p53": 6}, {"pdf": 329, "pg": "303", "ov": 0.15, "p53": 7}, {"pdf": 330, "pg": "304", "ov": 0.17, "p53": 8}, {"pdf": 331, "pg": "305", "ov": 0.34, "p53": 9}, {"pdf": 332, "pg": "306", "ov": 0.56, "p53": 10}, {"pdf": 333, "pg": "307", "ov": 0.31, "p53": 12}, {"pdf": 334, "pg": "308", "ov": 0.42, "p53": 13}, {"pdf": 335, "pg": "309", "ov": 0.4, "p53": 15}, {"pdf": 336, "pg": "310", "ov": 0.46, "p53": 16}, {"pdf": 337, "pg": "311", "ov": 0.45, "p53": 18}, {"pdf": 338, "pg": "312", "ov": 0.47, "p53": 19}, {"pdf": 339, "pg": "313", "ov": 0.48, "p53": 20}, {"pdf": 340, "pg": "314", "ov": 0.25, "p53": 22}, {"pdf": 341, "pg": "315", "ov": 0.3, "p53": 23}, {"pdf": 342, "pg": "316", "ov": 0.37, "p53": 25}, {"pdf": 343, "pg": "317", "ov": 0.35, "p53": 26}, {"pdf": 344, "pg": "318", "ov": 0.45, "p53": 28}, {"pdf": 345, "pg": "319", "ov": 0.41, "p53": 29}, {"pdf": 346, "pg": "320", "ov": 0.26, "p53": 31}, {"pdf": 347, "pg": "321", "ov": 0.34, "p53": 32}, {"pdf": 348, "pg": "322", "ov": 0.19, "p53": 33}, {"pdf": 349, "pg": "323", "ov": 0.13, "p53": 34}, {"pdf": 350, "pg": "324", "ov": 0.25, "p53": 35}, {"pdf": 351, "pg": "325", "ov": 0.33, "p53": 37}, {"pdf": 352, "pg": "326", "ov": 0.36, "p53": 38}, {"pdf": 353, "pg": "327", "ov": 0.24, "p53": 39}, {"pdf": 354, "pg": "328", "ov": 0.35, "p53": 41}, {"pdf": 355, "pg": "329", "ov": 0.34, "p53": 43}, {"pdf": 356, "pg": "330", "ov": 0.5, "p53": 44}, {"pdf": 357, "pg": "331", "ov": 0.58, "p53": 45}, {"pdf": 358, "pg": "332", "ov": 0.24, "p53": 47}, {"pdf": 359, "pg": "333", "ov": 0.29, "p53": 48}, {"pdf": 360, "pg": "334", "ov": 0.34, "p53": 50}, {"pdf": 361, "pg": "335", "ov": 0.2, "p53": 51}, {"pdf": 362, "pg": "336", "ov": 0.11, "p53": 52}, {"pdf": 363, "pg": "337", "ov": 0.11, "p53": 53}, {"pdf": 364, "pg": "338", "ov": 0.0, "p53": null}, {"pdf": 365, "pg": "339", "ov": 0.27, "p53": 55}, {"pdf": 366, "pg": "340", "ov": 0.35, "p53": 57}, {"pdf": 367, "pg": "341", "ov": 0.29, "p53": 58}, {"pdf": 368, "pg": "342", "ov": 0.26, "p53": 60}, {"pdf": 369, "pg": "343", "ov": 0.49, "p53": 61}, {"pdf": 370, "pg": "344", "ov": 0.38, "p53": 62}, {"pdf": 371, "pg": "345", "ov": 0.37, "p53": 64}, {"pdf": 372, "pg": "346", "ov": 0.38, "p53": 65}, {"pdf": 373, "pg": "347", "ov": 0.55, "p53": 67}, {"pdf": 374, "pg": "348", "ov": 0.24, "p53": 68}, {"pdf": 375, "pg": "349", "ov": 0.22, "p53": 69}, {"pdf": 376, "pg": "350", "ov": 0.21, "p53": 70}, {"pdf": 377, "pg": "351", "ov": 0.59, "p53": 71}, {"pdf": 378, "pg": "352", "ov": 0.49, "p53": 72}, {"pdf": 379, "pg": "353", "ov": 0.48, "p53": 74}, {"pdf": 380, "pg": "354", "ov": 0.46, "p53": 75}, {"pdf": 381, "pg": "355", "ov": 0.52, "p53": 77}, {"pdf": 382, "pg": "356", "ov": 0.53, "p53": 78}, {"pdf": 383, "pg": "357", "ov": 0.45, "p53": 80}, {"pdf": 384, "pg": "358", "ov": 0.47, "p53": 81}, {"pdf": 385, "pg": "359", "ov": 0.5, "p53": 82}, {"pdf": 386, "pg": "360", "ov": 0.46, "p53": 84}, {"pdf": 387, "pg": "361", "ov": 0.46, "p53": 85}, {"pdf": 388, "pg": "362", "ov": 0.51, "p53": 87}, {"pdf": 389, "pg": "363", "ov": 0.44, "p53": 88}, {"pdf": 390, "pg": "364", "ov": 0.51, "p53": 90}, {"pdf": 391, "pg": "365", "ov": 0.39, "p53": 91}, {"pdf": 392, "pg": "366", "ov": 0.4, "p53": 92}, {"pdf": 393, "pg": "367", "ov": 0.01, "p53": 94}, {"pdf": 394, "pg": "368", "ov": 0.26, "p53": 94}, {"pdf": 395, "pg": "369", "ov": 0.13, "p53": 95}, {"pdf": 396, "pg": "370", "ov": 0.0, "p53": null}, {"pdf": 397, "pg": "371", "ov": 0.07, "p53": 97}, {"pdf": 398, "pg": "372", "ov": 0.14, "p53": 98}, {"pdf": 399, "pg": "373", "ov": 0.21, "p53": 99}, {"pdf": 400, "pg": "374", "ov": 0.12, "p53": 100}, {"pdf": 401, "pg": "375", "ov": 0.05, "p53": 102}, {"pdf": 402, "pg": "376", "ov": 0.08, "p53": 104}, {"pdf": 403, "pg": "377", "ov": 0.12, "p53": 105}, {"pdf": 404, "pg": "378", "ov": 0.38, "p53": 106}, {"pdf": 405, "pg": "379", "ov": 0.35, "p53": 107}, {"pdf": 406, "pg": "380", "ov": 0.28, "p53": 109}, {"pdf": 407, "pg": "381", "ov": 0.38, "p53": 110}, {"pdf": 408, "pg": "382", "ov": 0.22, "p53": 112}, {"pdf": 409, "pg": "383", "ov": 0.27, "p53": 113}, {"pdf": 410, "pg": "384", "ov": 0.22, "p53": 115}, {"pdf": 411, "pg": "385", "ov": 0.12, "p53": 116}, {"pdf": 412, "pg": "386", "ov": 0.2, "p53": 120}, {"pdf": 413, "pg": "387", "ov": 0.25, "p53": 119}, {"pdf": 414, "pg": "388", "ov": 0.12, "p53": 123}, {"pdf": 415, "pg": "389", "ov": 0.25, "p53": 124}, {"pdf": 416, "pg": "390", "ov": 0.27, "p53": 125}, {"pdf": 417, "pg": "391", "ov": 0.1, "p53": 126}, {"pdf": 418, "pg": "392", "ov": 0.15, "p53": 127}, {"pdf": 419, "pg": "393", "ov": 0.12, "p53": 128}, {"pdf": 420, "pg": "394", "ov": 0.11, "p53": 129}, {"pdf": 421, "pg": "395", "ov": 0.12, "p53": 131}, {"pdf": 422, "pg": "396", "ov": 0.18, "p53": 132}, {"pdf": 423, "pg": "397", "ov": 0.14, "p53": 134}, {"pdf": 424, "pg": "398", "ov": 0.22, "p53": 136}, {"pdf": 425, "pg": "399", "ov": 0.25, "p53": 137}, {"pdf": 426, "pg": "400", "ov": 0.18, "p53": 138}, {"pdf": 427, "pg": "401", "ov": 0.15, "p53": 140}, {"pdf": 428, "pg": "402", "ov": 0.09, "p53": 142}, {"pdf": 429, "pg": "403", "ov": 0.24, "p53": 143}, {"pdf": 430, "pg": "404", "ov": 0.19, "p53": 144}, {"pdf": 431, "pg": "405", "ov": 0.28, "p53": 146}, {"pdf": 432, "pg": "406", "ov": 0.34, "p53": 147}, {"pdf": 433, "pg": "407", "ov": 0.04, "p53": 148}, {"pdf": 434, "pg": "408", "ov": 0.66, "p53": 150}, {"pdf": 435, "pg": "409", "ov": 0.67, "p53": 151}, {"pdf": 436, "pg": "410", "ov": 0.15, "p53": 153}, {"pdf": 437, "pg": "411", "ov": 0.08, "p53": 154}, {"pdf": 438, "pg": "412", "ov": 0.21, "p53": 155}, {"pdf": 439, "pg": "413", "ov": 0.18, "p53": 157}, {"pdf": 440, "pg": "414", "ov": 0.11, "p53": 157}, {"pdf": 441, "pg": "415", "ov": 0.19, "p53": 160}, {"pdf": 442, "pg": "416", "ov": 0.17, "p53": 161}, {"pdf": 443, "pg": "417", "ov": 0.02, "p53": 162}, {"pdf": 444, "pg": "418", "ov": 0.05, "p53": 163}, {"pdf": 445, "pg": "419", "ov": 0.2, "p53": 163}];
+(function () {
+  const box = document.getElementById("chart"), tip = document.getElementById("tip");
+  const W = 1000, H = 230, m = { l: 36, r: 8, t: 14, b: 30 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, n = DATA.length, bw = iw / n;
+  const y = v => m.t + ih - v * ih;
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Share of each 1834 page's word sequences found in the 1653 text">`;
+  const i0 = DATA.findIndex(d => +d.pg >= 412), i1 = DATA.findIndex(d => +d.pg > 417);
+  s += `<rect x="${m.l + i0 * bw}" y="${m.t}" width="${(i1 - i0) * bw}" height="${ih}" fill="var(--band)"/>`;
+  s += `<text x="${m.l + i0 * bw - 4}" y="${m.t + 10}" text-anchor="end" style="fill:var(--muted);font:11px -apple-system,Helvetica,Arial,sans-serif">Proquiritations → Distich →</text>`;
+  s += `<g class="grid">` + [0.25, 0.5, 0.75].map(v => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/>`).join("") + `</g>`;
+  s += `<g class="axis">` + [0, 0.25, 0.5, 0.75].map(v => `<text x="${m.l - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`).join("");
+  DATA.forEach((d, i) => { if (+d.pg % 20 === 0 || +d.pg === 419) s += `<text x="${m.l + i * bw + bw / 2}" y="${H - 10}" text-anchor="${+d.pg === 419 ? "end" : "middle"}">p.${d.pg}</text>`; });
+  s += `<line x1="${m.l}" x2="${W - m.r}" y1="${y(0)}" y2="${y(0)}"/></g>`;
+  DATA.forEach((d, i) => {
+    const v = d.ov == null ? 0 : d.ov, x = m.l + i * bw + 1, w = Math.max(1, bw - 2), h = Math.max(v * ih, d.ov == null ? 0 : 1.5);
+    s += `<path d="M${x},${y(0)} V${y(0) - h + Math.min(3, h)} q0,-${Math.min(3, h)} ${Math.min(3, w / 2)},-${Math.min(3, h)} H${x + w - Math.min(3, w / 2)} q${Math.min(3, w / 2)},0 ${Math.min(3, w / 2)},${Math.min(3, h)} V${y(0)} Z" fill="var(--bar)"/>`;
+    s += `<rect class="hit" data-i="${i}" x="${m.l + i * bw}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`;
+  });
+  s += `</svg>`;
+  box.insertAdjacentHTML("afterbegin", s);
+  box.addEventListener("mousemove", e => {
+    const r = e.target.closest ? e.target.closest(".hit") : null;
+    if (!r) { tip.style.opacity = 0; return; }
+    const d = DATA[+r.dataset.i], bb = box.getBoundingClientRect(), rb = r.getBoundingClientRect();
+    tip.innerHTML = `1834 p. ${d.pg} · overlap ${d.ov == null ? "n/a (blank)" : d.ov.toFixed(2)}${d.p53 ? ` · best 1653 match: PDF p. ${d.p53}` : ""}`;
+    const tw = tip.offsetWidth, cx = rb.left - bb.left + rb.width / 2;
+    tip.style.left = Math.min(Math.max(cx, tw / 2 + 4), bb.width - tw / 2 - 4) + "px"; tip.style.top = (rb.top - bb.top + 20) + "px"; tip.style.opacity = 1;
+  });
+  box.addEventListener("mouseleave", () => tip.style.opacity = 0);
+})();
+</script>
+</body>
+</html>
