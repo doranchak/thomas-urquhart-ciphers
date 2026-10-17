@@ -223,7 +223,8 @@ body > .wrap { padding-bottom: 80px; }
 </div></div>
 
 <div id="bar">
-  <button id="animBtn" type="button">▶ Animate</button>
+  <button id="animBtn" type="button">▶ Animate full</button>
+  <button id="posBtn" type="button">▶ Animate position numbers</button>
   <button id="stopBtn" type="button" disabled>■ Stop</button>
   <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="speedVal">1×</span></label>
   <span id="animStatus" class="anim-status"></span>
@@ -507,7 +508,7 @@ document.addEventListener("keydown", e => {
 });
 
 /* ---------- animation ---------- */
-const anim = { running: false, paused: false, stop: false };
+const anim = { running: false, paused: false, stop: false, mode: null };
 const BASE_DELAY = 700;               // ms per step at 1×
 const speedEl = $("speed");
 speedEl.addEventListener("input", () => { $("speedVal").textContent = (+speedEl.value) + "×"; });
@@ -524,7 +525,11 @@ function wait(mult = 1) {
   });
 }
 function updateButtons() {
-  $("animBtn").textContent = !anim.running ? "▶ Animate" : anim.paused ? "▶ Resume" : "❚❚ Pause";
+  const label = (mode, idle) => !anim.running || anim.mode !== mode ? idle : anim.paused ? "▶ Resume" : "❚❚ Pause";
+  $("animBtn").textContent = label("full", "▶ Animate full");
+  $("posBtn").textContent = label("pos", "▶ Animate position numbers");
+  $("animBtn").disabled = anim.running && anim.mode !== "full";
+  $("posBtn").disabled = anim.running && anim.mode !== "pos";
   $("stopBtn").disabled = !anim.running;
   document.body.classList.toggle("animating", anim.running);
 }
@@ -534,7 +539,7 @@ const clearMarks = () => {
 };
 var emptyExcerpt = "";
 async function animate() {
-  anim.running = true; anim.paused = false; anim.stop = false; updateButtons();
+  anim.mode = "full"; anim.running = true; anim.paused = false; anim.stop = false; updateButtons();
   setPin(null); clearMarks(); current = null;
   document.querySelectorAll(".let").forEach(e => { e.classList.add("blank"); e.classList.remove("reveal"); });
   $("excerpt").innerHTML = emptyExcerpt;
@@ -561,12 +566,35 @@ async function animate() {
     if (!anim.stop) await wait(0.6);
   }
   const stopped = anim.stop;
-  anim.running = false; anim.paused = false; anim.stop = false; updateButtons();
+  anim.running = false; anim.paused = false; anim.stop = false; anim.mode = null; updateButtons();
   document.querySelectorAll(".let").forEach(e => e.classList.remove("blank"));
   document.querySelectorAll(".ordbadge").forEach(e => e.remove());
   $("animStatus").textContent = stopped ? "Stopped." : "Done — all 64 letters recovered.";
   clearMarks(); select(null);
 }
+async function animatePositions() {
+  anim.mode = "pos"; anim.running = true; anim.paused = false; anim.stop = false; updateButtons();
+  setPin(null); clearMarks(); current = null; $("excerpt").innerHTML = "";
+  await wait(0.5);
+  for (let k = 0; k < 64 && !anim.stop; k++) {
+    const L = Math.floor(k / 32), i = k % 32;
+    const num = document.querySelector(`.num[data-l="${L}"][data-i="${i}"]`);
+    $("animStatus").textContent = `Line ${L + 1}, position ${i + 1} of 32`;
+    clearMarks();
+    num.classList.add("on");                                   // red highlight + ordinal, together
+    const b = document.createElement("span"); b.className = "ordbadge";
+    b.textContent = ordinal(i + 1); num.parentElement.appendChild(b);
+    await wait(1);
+  }
+  const stopped = anim.stop;
+  anim.running = false; anim.paused = false; anim.stop = false; anim.mode = null; updateButtons();
+  $("animStatus").textContent = stopped ? "Stopped." : "Done.";
+  clearMarks(); select(null);
+}
+$("posBtn").addEventListener("click", () => {
+  if (!anim.running) { animatePositions(); return; }
+  if (anim.mode === "pos") { anim.paused = !anim.paused; updateButtons(); }
+});
 $("animBtn").addEventListener("click", () => {
   if (!anim.running) { animate(); return; }
   anim.paused = !anim.paused; updateButtons();
