@@ -167,51 +167,70 @@ header p { font-size: 14px; }
 .wd.sel .wn { color: var(--accent); font-weight: 700; }
 .wd.sel .first { color: var(--accent); font-weight: 700; text-decoration: underline 2px; text-underline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .ordbadge, .let.reveal { animation: none; } }
+
+/* ===== 16:9 video layout: fixed 1920x1080 stage scaled to the window ===== */
+html, body { background: #000; }
+#view { position: relative; height: calc(100vh - 52px); overflow: hidden; background: #000; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden;
+  background: var(--bg); padding: 36px 64px 32px; display: flex; flex-direction: column; gap: 22px; }
+#stage header { display: flex; align-items: baseline; gap: 32px; }
+#stage header h1 { font-size: 40px; margin: 0; white-space: nowrap; }
+#stage header p { font-size: 22px; margin: 0; color: var(--muted); white-space: nowrap; }
+#stage .card { margin: 0; padding: 18px 28px; }
+#stage .card h2 { font-size: 16px; margin-bottom: 8px; }
+#stage .cline { margin: 0 0 8px; row-gap: 0; flex-wrap: nowrap; justify-content: space-between; align-items: baseline; padding-top: 22px; }
+#stage .cline .lbl, #stage .pline .lbl { display: none; }
+#stage .num { font-size: 25px; padding: 3px 5px; }
+#stage .dot { font-size: 25px; }
+#stage .ordbadge { font-size: 15px; }
+#stage .pline { margin: 0 0 4px; flex-wrap: nowrap; justify-content: space-between; }
+#stage .pword { margin-right: 0; }
+#stage .let { font-size: 38px; min-width: 1.05em; line-height: 1.2; }
+#stage .excerpt { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-start; }
+#excerpt.flowmode { width: 100%; }
+#excerpt.flowmode .ptext { display: block; }
+#stage .ln.flow { display: inline; }
+.nw { white-space: nowrap; }
+#excerpt { width: fit-content; max-width: 100%; margin: 0 auto; }
+#stage .ex-head .t { font-size: 34px; }
+#stage .ex-head .p { font-size: 22px; }
+#stage .ptext { font-size: var(--exfs, 30px); line-height: 1.25; word-spacing: 0; }
+#stage .ptext .ln { margin: 4px 0; }
+#stage .wn { font-size: .55em; }
+#stage .sig { font-size: 26px; }
+#stage .notes { font-size: 20px; min-height: 28px; }
+#stage .ptext .pg { display: none; }
+#bar { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; z-index: 20; background: #111; color: #ddd; display: flex; align-items: center; gap: 18px; padding: 0 14px;
+  border-top: 1px solid #333; font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; font-size: 13px; }
+#bar.hidden { display: none; }
+#bar button { font: inherit; font-weight: 600; padding: 6px 14px; border-radius: 7px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #17140f; }
+#bar button#stopBtn { background: transparent; color: var(--accent); }
+#bar button:disabled { opacity: .4; cursor: default; }
+#bar .speed { color: #aaa; } #bar #speedVal { color: #ddd; }
+#bar small { margin-left: auto; color: #777; }
+body > .wrap { padding-bottom: 80px; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div id="view"><div id="stage">
   <header>
-    <div class="titlerow">
-      <h1>The Cyphral Distich</h1>
-    <div class="controls">
-    <button id="animBtn" type="button">▶ Animate</button>
-    <button id="stopBtn" type="button" disabled>■ Stop</button>
-    <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="speedVal">1×</span></label>
-    <span id="animStatus" class="anim-status"></span>
-    </div>
-    </div>
-    <p>Sir Thomas Urquhart, <i>Logopandecteision</i> (1653); <i>Works</i> (Edinburgh, 1834), pp. 412–417. Hover (or click to pin) any cipher number or plaintext letter.</p>
+    <h1>The Cyphral Distich</h1>
+    <p>Sir Thomas Urquhart, <i>Logopandecteision</i> (1653); <i>Works</i> (Edinburgh, 1834), pp. 412&ndash;417</p>
   </header>
+  <div class="card"><h2>Cipher</h2><div id="cipher"></div></div>
+  <div class="card"><h2>Plaintext</h2><div id="plain"></div></div>
+  <div class="card excerpt"><div id="excerpt"></div></div>
+</div></div>
 
+<div id="bar">
+  <button id="animBtn" type="button">▶ Animate</button>
+  <button id="stopBtn" type="button" disabled>■ Stop</button>
+  <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="speedVal">1×</span></label>
+  <span id="animStatus" class="anim-status"></span>
+  <small>H: hide bar &middot; scroll down for method &amp; tables</small>
+</div>
 
-
-  <div class="split">
-  <div class="left">
-  <div class="card">
-    <h2>Cipher</h2>
-    <div id="cipher"></div>
-  </div>
-
-  <div class="card">
-    <h2>Plaintext</h2>
-    <div id="plain"></div>
-  </div>
-
-
-  </div>
-  <div class="right">
-  <div class="card">
-    <h2>Selection</h2>
-    <div class="info" id="info"><span class="hint">Nothing selected — hover a number or letter.</span></div>
-  </div>
-  <div class="card excerpt">
-    <h2>Proquiritation excerpt</h2>
-    <div id="excerpt"><div class="empty">The Proquiritation named by the selected number appears here, with its words numbered.</div></div>
-  </div>
-  </div>
-  </div>
-
+<div class="wrap">
   <div class="card method">
     <h2>Method</h2>
     Each line of the distich has 32 numbers, one for each of the 32 Proquiritations that precede it.
@@ -379,19 +398,25 @@ function renderTables() {
 const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /* ---------- excerpt ---------- */
-function renderExcerpt(L, i, stage = 9) {
+function excerptHtml(L, i, stage, flow) {
   const item = PROQ[i], tok = TOK[i], n = CIPHER[L][i];
   const pages = [...new Set(item.pages)];
   let h = `<div class="ex-head"><span class="t">Proquiritation ${item.n}</span>
     <span class="p">${pages.length > 1 ? "pp. " + pages.join("–") : "p. " + pages[0]} · ${tok.words.length} words${stage >= 4 ? " · selected word " + n : ""}</span></div><div class="ptext">`;
   let prevPage = item.pages[0];
   const started = new Set();
+  let hyphPrev = false, splitPrev = false;
   tok.lines.forEach((pieces, li) => {
     if (item.pages[li] !== prevPage) { h += `<span class="pg">page ${item.pages[li]}</span>`; prevPage = item.pages[li]; }
-    h += `<span class="ln">`;
+    h += `<span class="ln${flow ? " flow" : ""}">`;
+    if (flow && li > 0 && !hyphPrev) h += " ";       // reflowed: lines join with a space
     if (li === 0) h += `<span style="color:var(--muted)">${item.n}. </span>`;
+    const last = pieces[pieces.length - 1], before = pieces[pieces.length - 2];
+    const nextFirst = tok.lines[li + 1] && tok.lines[li + 1].find(q => q.word >= 0);
+    const endHyphen = flow && last && last.text === "-" && !!nextFirst;                 // line ends with a hyphen
+    const splitNext = endHyphen && before && before.word >= 0 && before.word === nextFirst.word;   // word broken across lines
     pieces.forEach(p => {
-      if (p.word < 0) { h += esc(p.text); return; }
+      if (p.word < 0) { if (!(splitNext && p === last)) h += esc(p.text); return; }   // drop the hyphen of a rejoined word
       const sel = stage >= 4 && p.word === n - 1;
       const isFirst = !started.has(p.word);
       let inner = esc(p.text);
@@ -401,9 +426,12 @@ function renderExcerpt(L, i, stage = 9) {
       }
       // number stacked above the word in one box, so a highlight covers both
       started.add(p.word);
+      if (splitNext && p === before) h += `<span class="nw">`;
       h += `<span class="wd${sel ? " sel" : ""}"${sel && isFirst ? ' id="selword"' : ""}>` +
-           `<span class="wn">${isFirst ? p.word + 1 : "&nbsp;"}</span><span class="w">${inner}</span></span>`;
+           `<span class="wn">${isFirst ? p.word + 1 : "&nbsp;"}</span><span class="w">${inner}</span></span>` +
+           (flow && !isFirst && splitPrev && p === pieces.find(q => q.word >= 0) ? `</span>` : "");
     });
+    splitPrev = splitNext; hyphPrev = endHyphen;
     if (li === tok.lines.length - 1) h += `<span class="sig">${esc(item.sig)}</span>`;
     h += `</span>`;
   });
@@ -417,7 +445,22 @@ function renderExcerpt(L, i, stage = 9) {
   if (L === 1 && i === 23) notes.push("Number read as 38, as printed on p. 417 (not 33)");
   if (stage < 4) notes.length = 0;
   h += `<div class="notes">${notes.length ? "Counting notes before word " + n + ": " + notes.join("; ") + "." : ""}</div>`;
-  $("excerpt").innerHTML = h;
+  return h;
+}
+
+// 16:9 stage: try the printed line breaks and a full-width reflow; keep whichever allows the larger font
+function renderExcerpt(L, i, stage = 9) {
+  const box = $("excerpt"), card = document.querySelector(".excerpt");
+  const fitFs = () => {
+    let fs = 36;
+    for (; fs > 14; fs--) { card.style.setProperty("--exfs", fs + "px"); if (card.scrollHeight <= card.clientHeight + 1 && box.scrollWidth <= box.clientWidth + 1) break; }
+    return fs;
+  };
+  const tryMode = flow => { box.classList.toggle("flowmode", flow); box.innerHTML = excerptHtml(L, i, stage, flow); return fitFs(); };
+  const printed = tryMode(false);
+  const flowed = tryMode(true);
+  if (printed * 1.1 >= flowed) { tryMode(false); }                 // keep the authentic line breaks unless reflow is clearly better
+  else card.style.setProperty("--exfs", flowed + "px");
   const w = $("selword"), r = document.querySelector(".right");
   if (w && r && getComputedStyle(r).position === "sticky") {
     const wr = w.getBoundingClientRect(), rr = r.getBoundingClientRect();
@@ -431,25 +474,11 @@ function select(L, i) {
   current = (L == null) ? null : [L, i];
   document.querySelectorAll(".on").forEach(e => e.classList.remove("on"));
   if (!current) {
-    $("info").innerHTML = `<span class="hint">Nothing selected — hover a number or letter; click to lock the selection.</span>`;
-    $("excerpt").innerHTML = emptyExcerpt;
+    $("excerpt").innerHTML = "";
     return;
   }
   document.querySelectorAll(`[data-l="${L}"][data-i="${i}"]`).forEach(e => e.classList.add("on"));
-  showInfo(L, i);
   renderExcerpt(L, i);
-}
-function showInfo(L, i, stage = 9) {
-  const c = cell(L, i), item = PROQ[i];
-  const pages = [...new Set(item.pages)];
-  // every field is always laid out (hidden until its stage) so the panel never changes size
-  const v = (st, html) => `<span class="${stage >= st ? "" : "pending"}">${html}</span>`;
-  $("info").innerHTML = `<span><span class="k">Line</span>${L + 1}</span>
-    <span><span class="k">Number</span><span class="mono">${c.n}</span></span>
-    <span><span class="k">Position</span>${v(2, ordinal(i + 1) + " of 32")}</span>
-    <span><span class="k">Proquiritation</span>${v(2, `${i + 1} <span style="color:var(--muted)">(${pages.length > 1 ? "pp. " + pages.join("–") : "p. " + pages[0]}, signed ${esc(item.sig)})</span>`)}</span>
-    <span><span class="k">Word</span>${v(4, `${c.n}: “${esc(c.word)}”`)}</span>
-    <span><span class="k">Letter</span>${v(6, `<b>${c.letter}</b>`)}</span>`;
 }
 function ordinal(n) {
   const s = ["th", "st", "nd", "rd"], v = n % 100;
@@ -503,13 +532,12 @@ const clearMarks = () => {
   document.querySelectorAll(".on").forEach(e => e.classList.remove("on"));
   document.querySelectorAll(".ordbadge").forEach(e => e.remove());
 };
-var emptyExcerpt = `<div class="empty">The Proquiritation named by the selected number appears here, with its words numbered.</div>`;
+var emptyExcerpt = "";
 async function animate() {
   anim.running = true; anim.paused = false; anim.stop = false; updateButtons();
   setPin(null); clearMarks(); current = null;
   document.querySelectorAll(".let").forEach(e => { e.classList.add("blank"); e.classList.remove("reveal"); });
   $("excerpt").innerHTML = emptyExcerpt;
-  $("info").innerHTML = `<span class="hint">Animating…</span>`;
   await wait(1);
   for (let k = 0; k < 64 && !anim.stop; k++) {
     const L = Math.floor(k / 32), i = k % 32;
@@ -517,13 +545,13 @@ async function animate() {
     const let_ = document.querySelector(`.let[data-l="${L}"][data-i="${i}"]`);
     $("animStatus").textContent = `Line ${L + 1}, number ${i + 1} of 32`;
     const steps = [
-      () => { clearMarks(); $("excerpt").innerHTML = emptyExcerpt; num.classList.add("on"); showInfo(L, i, 1); },                  // 1 highlight number
+      () => { clearMarks(); $("excerpt").innerHTML = emptyExcerpt; num.classList.add("on"); },                  // 1 highlight number
       () => { const b = document.createElement("span"); b.className = "ordbadge";           // 2 ordinal
-              b.textContent = ordinal(i + 1); num.parentElement.appendChild(b); showInfo(L, i, 2); },
-      () => { renderExcerpt(L, i, 3); showInfo(L, i, 3); },                                   // 3 load excerpt
-      () => { renderExcerpt(L, i, 4); showInfo(L, i, 4); },                                   // 4 highlight nth word
+              b.textContent = ordinal(i + 1); num.parentElement.appendChild(b); },
+      () => { renderExcerpt(L, i, 3); },                                   // 3 load excerpt
+      () => { renderExcerpt(L, i, 4); },                                   // 4 highlight nth word
       () => { renderExcerpt(L, i, 5); },                                                      // 5 mark first letter
-      () => { let_.classList.remove("blank"); let_.classList.add("on", "reveal"); showInfo(L, i, 6); } // 6 plaintext
+      () => { let_.classList.remove("blank"); let_.classList.add("on", "reveal"); } // 6 plaintext
     ];
     for (const step of steps) {
       if (anim.stop) break;
@@ -546,6 +574,19 @@ $("animBtn").addEventListener("click", () => {
 $("stopBtn").addEventListener("click", () => { anim.stop = true; anim.paused = false; });
 
 renderCipher(); renderPlain(); renderTables();
+function fit() {
+  const view = $("view"), k = Math.min(view.clientWidth / 1920, view.clientHeight / 1080);
+  const st = $("stage");
+  st.style.transform = `scale(${k})`;
+  st.style.left = (view.clientWidth - 1920 * k) / 2 + "px"; st.style.top = (view.clientHeight - 1080 * k) / 2 + "px";
+}
+addEventListener("resize", fit); fit();
+addEventListener("keydown", e => {
+  if (e.key === "h" || e.key === "H") {
+    const bar = $("bar"); bar.classList.toggle("hidden");
+    $("view").style.height = bar.classList.contains("hidden") ? "100vh" : "calc(100vh - 52px)"; fit();
+  }
+});
 // start with nothing selected or pinned; pinning happens only on an explicit click / arrow key
 </script>
 </body>
