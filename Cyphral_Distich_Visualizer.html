@@ -227,6 +227,7 @@ body > .wrap { padding-bottom: 80px; }
   <button id="posBtn" type="button">▶ Animate position numbers</button>
   <button id="stopBtn" type="button" disabled>■ Stop</button>
   <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="speedVal">1×</span></label>
+  <label class="speed"><input type="checkbox" id="keepEx"> Keep excerpt between steps?</label>
   <span id="animStatus" class="anim-status"></span>
   <small>H: hide bar &middot; scroll down for method &amp; tables</small>
 </div>
@@ -550,7 +551,7 @@ async function animate() {
     const let_ = document.querySelector(`.let[data-l="${L}"][data-i="${i}"]`);
     $("animStatus").textContent = `Line ${L + 1}, number ${i + 1} of 32`;
     const steps = [
-      () => { clearMarks(); $("excerpt").innerHTML = emptyExcerpt; num.classList.add("on"); },                  // 1 highlight number
+      () => { clearMarks(); if (!$("keepEx").checked) $("excerpt").innerHTML = emptyExcerpt; num.classList.add("on"); },                  // 1 highlight number
       () => { const b = document.createElement("span"); b.className = "ordbadge";           // 2 ordinal
               b.textContent = ordinal(i + 1); num.parentElement.appendChild(b); },
       () => { renderExcerpt(L, i, 3); },                                   // 3 load excerpt
