@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyphral Distich Display</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --chip: #efe9da;
+  --accent2: #2f5f8f; --accent2-soft: #dbe6f2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --chip: #2e2a25;
+    --accent2: #7fb3e6; --accent2-soft: #22364a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --chip: #2e2a25;
+  --accent2: #7fb3e6; --accent2-soft: #22364a;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+#frame { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  padding: 40px 56px 44px; display: flex; flex-direction: column; gap: 26px; }
+header { display: flex; align-items: baseline; gap: 32px; }
+header h1 { margin: 0; font-size: 46px; letter-spacing: .02em; font-variant: small-caps; white-space: nowrap; }
+header p { margin: 0; font-size: 22px; color: var(--muted); white-space: nowrap; }
+.card { flex: 1; min-height: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; padding: 62px 34px 24px 34px;
+  position: relative; display: flex; flex-direction: column; justify-content: center; gap: 26px; --c: var(--accent); --cs: var(--accent-soft); }
+.card.l2 { --c: var(--accent2); --cs: var(--accent2-soft); }
+.card::before { content: ""; position: absolute; left: 0; top: 18px; bottom: 18px; width: 8px; border-radius: 0 6px 6px 0; background: var(--c); }
+.tag { position: absolute; left: 34px; top: 20px; font: 600 20px/1 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--c); background: var(--cs); padding: 8px 16px; border-radius: 20px; }
+.row { display: flex; justify-content: center; align-items: flex-start; gap: 64px; }
+.word { display: flex; position: relative; }
+.word + .word::before { content: ""; position: absolute; left: -32px; top: 6px; bottom: 6px; width: 2px; background: var(--rule); }
+.col { width: 82px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.num { font: 600 33px/1.2 ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--chip); border-radius: 8px; padding: 3px 9px; font-variant-numeric: tabular-nums; }
+.let { font-size: 82px; line-height: 1.1; color: var(--c); font-weight: 600; }
+</style>
+</head>
+<body>
+<div id="frame">
+  <header>
+    <h1>The Cyphral Distich</h1>
+    <p>Sir Thomas Urquhart, <i>Logopandecteision</i> (1653); <i>Works</i> (Edinburgh, 1834), pp. 412&ndash;417</p>
+  </header>
+  <div id="lines" style="display:contents"></div>
+</div>
+<script>
+const CIPHER = [
+  [5,3,27,38,32,14,21,8,66,8,70,39,5,9,12,18,2,3,56,5,1,7,3,2,13,19,3,25,9,3,16,6],
+  [25,15,13,6,11,20,5,1,2,12,1,20,20,49,20,20,35,33,4,6,8,35,5,38,5,5,18,10,3,11,32,42]
+];
+const EXPECTED = ["O GOD UPHOLD KING CHARLS THE SECOND AND", "MAKE HIM THE SUPREME RULER OF THIS LAND"];
+const SPLIT = [3, 4];   // words on each line's first row (rest go on the second row), to keep the two rows balanced
+const frame = document.getElementById("frame"), box = document.getElementById("lines");
+EXPECTED.forEach((text, L) => {
+  const words = text.split(" ");
+  const card = document.createElement("div");
+  card.className = "card l" + (L + 1);
+  card.innerHTML = `<div class="tag">Line ${L + 1}</div>`;
+  let pos = 0;
+  [words.slice(0, SPLIT[L] + (L === 0 ? 1 : 0)), words.slice(SPLIT[L] + (L === 0 ? 1 : 0))].forEach(ws => {
+    const row = document.createElement("div"); row.className = "row";
+    ws.forEach(w => {
+      const wd = document.createElement("div"); wd.className = "word";
+      for (const ch of w) wd.insertAdjacentHTML("beforeend", `<div class="col"><span class="num">${CIPHER[L][pos++]}</span><span class="let">${ch}</span></div>`);
+      row.appendChild(wd);
+    });
+    card.appendChild(row);
+  });
+  box.appendChild(card);
+});
+function fit() { const k = Math.min(innerWidth / 1920, innerHeight / 1080);
+  frame.style.left = (innerWidth - 1920 * k) / 2 + "px"; frame.style.top = (innerHeight - 1080 * k) / 2 + "px"; frame.style.transform = `scale(${k})`; }
+addEventListener("resize", fit); fit();
+</script>
+</body>
+</html>

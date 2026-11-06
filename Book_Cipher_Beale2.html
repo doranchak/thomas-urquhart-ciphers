@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How a Book Cipher Works: Beale No. 2</title>
+<style>
+:root {
+  --bg: #f7f4ec; --panel: #fffdf7; --ink: #2a2620; --muted: #7a7164; --rule: #e2dccd;
+  --accent: #9b3d1f; --accent-soft: #f3dccf; --hl: #fbe7a8; --hl-ink: #2a2620; --chip: #efe9da; --ok: #3f7a3a;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+    --accent: #e08a5f; --accent-soft: #4a2f22; --hl: #6a5518; --hl-ink: #fff6dc; --chip: #2e2a25; --ok: #8cc783;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1916; --panel: #24211d; --ink: #ece6da; --muted: #a1978a; --rule: #3a352e;
+  --accent: #e08a5f; --accent-soft: #4a2f22; --hl: #6a5518; --hl-ink: #fff6dc; --chip: #2e2a25; --ok: #8cc783;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+#view { position: absolute; left: 0; right: 0; top: 0; bottom: 52px; }
+#view.full { bottom: 0; }
+#frame { position: absolute; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: var(--bg); color: var(--ink);
+  font: 16px/1.5 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; padding: 34px 56px 36px; display: flex; flex-direction: column; gap: 18px; }
+.mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+header { display: flex; align-items: baseline; gap: 30px; height: 62px; }
+header h1 { margin: 0; font-size: 46px; letter-spacing: .02em; font-variant: small-caps; white-space: nowrap; }
+header p { margin: 0; font-size: 24px; color: var(--muted); white-space: nowrap; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 14px; position: relative; }
+.lbl { position: absolute; left: 26px; top: 14px; z-index: 3; font: 600 15px/1 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+
+/* key */
+#keycard { height: 346px; }
+#win { position: absolute; left: 26px; right: 26px; top: 40px; bottom: 10px; overflow: hidden; }
+#win::before, #win::after { content: ""; position: absolute; left: 0; right: 0; height: 56px; z-index: 2; pointer-events: none; }
+#win::before { top: 0; background: linear-gradient(var(--panel), transparent); }
+#win::after { bottom: 0; background: linear-gradient(transparent, var(--panel)); }
+#keytext { position: absolute; left: 0; right: 0; top: 0; font-size: 33px; line-height: 1.12; transition: transform .4s cubic-bezier(.3,.1,.2,1); color: var(--muted); }
+.kw { display: inline-block; text-align: center; margin: 0 4px 12px; padding: 0 5px 2px; border-radius: 8px; transition: background .2s, color .2s, opacity .2s; }
+.kn { display: block; font: 600 14px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); opacity: .8; }
+.kw.hit { background: var(--hl); color: var(--hl-ink); box-shadow: 0 0 0 3px var(--hl); }
+.kw.hit .kn { color: var(--accent); opacity: 1; font-weight: 800; transform: scale(1.2); }
+.kw.hit .fl { color: var(--accent); text-decoration: underline 3px; text-underline-offset: 5px; text-shadow: 0.6px 0 0 currentColor, -0.6px 0 0 currentColor, 0 0.5px 0 currentColor; }   /* faux bold: real bold would change the glyph width and shift the text */
+.kw.used .fl { color: var(--ink); }
+
+/* formula */
+#formula { height: 100px; display: flex; align-items: stretch; gap: 14px; }
+.step { flex: 1; border-radius: 14px; background: var(--panel); border: 1px solid var(--rule); padding: 8px 24px; display: flex; flex-direction: column; justify-content: center; position: relative; transition: border-color .2s, background .2s; }
+.step small { font: 600 14px/1 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.step .v { font-size: 42px; line-height: 1.05; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-height: 48px; }
+.step.act { border-color: var(--accent); background: var(--accent-soft); }
+.step .v b { color: var(--accent); }
+.arrow { align-self: center; font-size: 42px; color: var(--accent); }
+#s1 .v { font-family: ui-monospace, Menlo, monospace; font-weight: 700; }
+#s3 { flex: .55; }
+#s3 .v { font-size: 60px; font-weight: 700; color: var(--accent); }
+
+/* tape */
+#tapecard { height: 142px; overflow: hidden; }
+#tape { position: absolute; left: 0; top: 36px; display: flex; gap: 14px; transition: transform .35s cubic-bezier(.3,.1,.2,1); }
+#tapecard::before, #tapecard::after { content: ""; position: absolute; top: 0; bottom: 0; width: 160px; z-index: 2; pointer-events: none; }
+#tapecard::before { left: 0; background: linear-gradient(90deg, var(--panel), transparent); }
+#tapecard::after { right: 0; background: linear-gradient(270deg, var(--panel), transparent); }
+.chip { width: 100px; text-align: center; opacity: .45; transition: opacity .2s, transform .2s; }
+.chip .cn { display: block; font: 600 38px/1.2 ui-monospace, Menlo, monospace; background: var(--chip); border-radius: 10px; padding: 3px 0; }
+.chip .cl { display: block; font-size: 44px; line-height: 1.15; height: 52px; color: var(--accent); font-weight: 700; }
+.chip.done { opacity: .9; }
+.chip.cur { opacity: 1; transform: scale(1.12); }
+.chip.cur .cn { background: var(--accent); color: var(--bg); }
+
+/* plaintext */
+#plaincard { flex: 1; min-height: 0; padding: 36px 34px 10px; display: flex; align-items: center; transition: border-color .4s; }
+#plaincard.done { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+#plain { font-size: 52px; line-height: 1.3; letter-spacing: 0; }
+.pw { display: inline-block; white-space: nowrap; margin-right: .32em; }
+.pl { display: inline-block; min-width: .52em; text-align: center; border-bottom: 3px solid var(--rule); margin: 0 1px; color: transparent; }
+.pl.f { color: var(--ink); border-bottom-color: transparent; }
+.pl.new { color: var(--accent); }
+.pp { display: inline-block; color: var(--muted); }
+.fly { position: absolute; z-index: 20; font-size: 52px; line-height: 1; font-weight: 800; color: var(--accent); pointer-events: none; transition: transform .35s cubic-bezier(.4,0,.2,1); }
+#hint { position: absolute; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.0); pointer-events: none; }
+
+#bar { position: fixed; left: 0; right: 0; bottom: 0; height: 52px; z-index: 40; background: #111; color: #ddd; display: flex; align-items: center; gap: 18px; padding: 0 14px;
+  border-top: 1px solid #333; font: 13px/1.2 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+#bar.hidden { display: none; }
+#bar button { font: inherit; font-weight: 600; padding: 6px 14px; border-radius: 7px; cursor: pointer; border: 1px solid var(--accent); background: var(--accent); color: #17140f; }
+#bar button.ghost { background: transparent; color: var(--accent); }
+#bar .speed { color: #aaa; display: inline-flex; gap: 8px; align-items: center; } #bar #sv { color: #ddd; min-width: 36px; }
+#bar small { margin-left: auto; color: #777; }
+</style>
+</head>
+<body>
+<div id="view"><div id="frame">
+  <header>
+    <h1>How a Book Cipher Works</h1>
+    <p>Beale Cipher No. 2 &middot; the key is the Declaration of Independence</p>
+  </header>
+
+  <div class="card" id="keycard"><div class="lbl">The key &middot; Declaration of Independence, every word numbered</div><div id="win"><div id="keytext"></div></div></div>
+
+  <div id="formula">
+    <div class="step" id="s1"><small>1 &nbsp;Read a cipher number</small><div class="v" id="v1">&mdash;</div></div>
+    <div class="arrow">&#10140;</div>
+    <div class="step" id="s2"><small>2 &nbsp;Count to that word in the key</small><div class="v" id="v2">&mdash;</div></div>
+    <div class="arrow">&#10140;</div>
+    <div class="step" id="s3"><small>3 &nbsp;Keep its first letter</small><div class="v" id="v3">&mdash;</div></div>
+  </div>
+
+  <div class="card" id="tapecard"><div class="lbl">Ciphertext</div><div id="tape"></div></div>
+
+  <div class="card" id="plaincard"><div class="lbl">Plaintext</div><div id="plain"></div></div>
+</div></div>
+
+<div id="bar">
+  <button id="play">&#9654; Start</button>
+  <button id="restart" class="ghost">Restart</button>
+  <label class="speed">Speed <input id="speed" type="range" min="0.5" max="4" step="0.25" value="1"> <span id="sv">1&times;</span></label>
+  <small>Space: start/pause &middot; H: hide bar</small>
+</div>
+
+<script>
+/* Beale cipher no. 2, the portion for "The first deposit consisted of ... Nov. eighteen nineteen."
+   KEY = Declaration of Independence as numbered in Ward's pamphlet (with its known edits; see notes in the page footer comment).
+   One number (84 -> 85, "consisted") is corrected: a known misprint in the original pamphlet. */
+const SEG = [50, 6, 575, 122, 154, 248, 110, 61, 52, 33, 30, 5, 38, 8, 14, 84, 57, 540, 217, 115, 71, 29, 85, 63, 43, 131, 29, 138, 47, 73, 239, 540, 52, 53, 79, 118, 51, 44, 63, 196, 12, 239, 112, 3, 49, 79, 353, 105, 56, 371, 557, 211, 505, 125, 360, 133, 143, 101, 15, 284, 540, 252, 14, 205, 140, 344, 26, 811, 138, 115, 48, 73, 34, 205, 316, 607, 63, 220, 7, 52, 150, 44, 52, 16, 40, 37, 158, 807, 37, 121, 12, 95, 10, 15, 35, 12, 131, 62, 115, 102, 807, 49, 53, 135, 138, 30, 31, 62, 67, 41, 85, 63, 10, 106, 807, 138, 8, 113, 20, 32, 33, 37, 353, 287, 140, 47, 85, 50, 37, 49, 47];
+const KEY = ["When,", "in", "the", "course", "of", "human", "events,", "it", "becomes", "necessary", "for", "one", "people", "to", "dissolve", "the", "political", "bands", "which", "have", "connected", "them", "with", "another,", "and", "to", "assume", "among", "the", "powers", "of", "the", "earth,", "the", "separate", "and", "equal", "station", "to", "which", "the", "laws", "of", "nature", "and", "of", "nature's", "God", "entitle", "them,", "a", "decent", "respect", "to", "the", "opinions", "of", "mankind", "requires", "that", "they", "should", "declare", "the", "causes", "which", "impel", "them", "to", "the", "separation.", "We", "hold", "these", "truths", "to", "be", "self-", "evident,", "that", "all", "men", "are", "created", "equal,", "that", "they", "are", "endowed", "by", "their", "Creator", "with", "certain", "unalienable", "rights,", "that", "among", "these", "are", "life,", "liberty", "and", "the", "pursuit", "of", "happiness.", "That", "to", "secure", "these", "rights,", "governments", "are", "instituted", "among", "men,", "deriving", "their", "just", "powers", "from", "the", "consent", "of", "the", "governed.", "That", "whenever", "any", "form", "of", "government", "becomes", "destructive", "of", "these", "ends,", "it", "is", "the", "right", "of", "the", "people", "to", "alter", "or", "to", "abolish", "it,", "and", "to", "institute", "a", "new", "government,", "laying", "its", "foundation", "on", "such", "principles,", "and", "organizing", "its", "powers", "in", "such", "form,", "as", "to", "them", "shall", "seem", "most", "likely", "to", "effect", "their", "safety", "and", "happiness.", "Prudence,", "indeed,", "will", "dictate", "that", "governments", "long", "established", "should", "not", "be", "changed", "for", "light", "and", "transient", "causes;", "and", "accordingly", "all", "experience", "hath", "shewn,", "that", "mankind", "are", "more", "disposed", "to", "suffer,", "while", "evils", "are", "sufferable,", "than", "to", "right", "themselves", "by", "abolishing", "the", "forms", "to", "which", "they", "are", "accustomed.", "But", "when", "a", "long", "train", "of", "abuses", "and", "usurpations,", "pursuing", "invariably", "the", "same", "object,", "evinces", "design", "to", "reduce", "them", "under", "absolute", "despotism,", "it", "is", "their", "right,", "it", "is", "their", "duty,", "to", "throw", "off", "such", "government,", "and", "to", "provide", "new", "guards", "for", "their", "future", "security.", "Such", "has", "been", "the", "patient", "sufferance", "of", "these", "colonies;", "and", "such", "is", "now", "the", "necessity", "which", "constrains", "them", "to", "alter", "their", "former", "systems", "of", "government.", "The", "history", "of", "the", "present", "King", "of", "Great", "Britain", "is", "a", "history", "of", "repeated", "injuries", "and", "usurpations,", "all", "having", "in", "direct", "object", "the", "establishment", "of", "an", "absolute", "tyranny", "over", "these", "states.", "To", "prove", "this,", "let", "facts", "be", "submitted", "to", "a", "candid", "world.", "He", "has", "refused", "his", "assent", "to", "laws,", "the", "most", "wholesome", "and", "necessary", "for", "the", "public", "good.", "He", "has", "forbidden", "his", "governors", "to", "pass", "laws", "of", "immediate", "and", "pressing", "importance,", "unless", "suspended", "in", "their", "operation", "till", "his", "assent", "should", "be", "obtained;", "and", "when", "so", "suspended,", "he", "has", "utterly", "neglected", "to", "attend", "to", "them.", "He", "has", "refused", "to", "pass", "other", "laws", "for", "the", "accommodation", "of", "large", "districts", "of", "people,", "unless", "those", "people", "would", "relinquish", "the", "right", "of", "representation", "in", "the", "legislature,", "a", "right", "inestimable", "to", "them,", "and", "formidable", "to", "tyrants", "only.", "He", "has", "called", "together", "legislative", "bodies", "at", "places", "unusual,", "uncomfortable,", "and", "distant", "from", "the", "depository", "of", "their", "public", "records,", "for", "the", "sole", "purpose", "of", "fatiguing", "them", "into", "compliance", "with", "his", "measures.", "He", "has", "dissolved", "representative", "houses", "repeatedly,", "for", "opposing", "with", "manly", "firmness", "his", "invasions", "on", "the", "rights", "of", "the", "people.", "to", "cause", "others", "to", "be", "elected;", "whereby", "the", "legislative", "powers,", "incapable", "of", "annihilation,", "have", "returned", "to", "the", "people", "at", "large", "for", "their", "exercise;", "the", "state", "remaining,", "in", "the", "mean", "time,", "exposed", "to", "all", "the", "dangers", "of", "invasion", "from", "without,", "and", "convulsions", "within.", "He", "has", "endeavored", "to", "prevent", "the", "population", "of", "these", "states;", "for", "that", "purpose", "obstructing", "the", "laws", "for", "naturalization", "of", "foreigners;", "refusing", "to", "pass", "others", "to", "encourage", "their", "migrations", "hither,", "and", "raising", "the", "conditions", "of", "new", "appropriations", "of", "lands.", "He", "has", "obstructed", "the", "administration", "of", "justice,", "by", "refusing", "his", "assent", "to", "laws", "for", "establishing", "judiciary", "powers.", "He", "has", "made", "judges", "dependent", "on", "his", "will", "alone,", "for", "the", "tenure", "of", "their", "offices,", "and", "the", "amount", "and", "payment", "of", "their", "salaries.", "He", "has", "erected", "a", "multitude", "of", "new", "offices,", "and", "sent", "hither", "swarms", "of", "officers", "to", "harass", "our", "people,", "and", "eat", "out", "their", "substance.", "He", "has", "kept", "among", "us,", "in", "times", "of", "peace,", "standing", "armies,", "without", "consent", "of", "our", "legislatures.", "He", "has", "affected", "to", "render", "the", "military", "independent", "of", "and", "superior", "to", "the", "civil", "power.", "He", "has", "combined", "with", "others", "to", "subject", "us", "to", "a", "jurisdiction", "foreign", "to", "our", "constitution,", "and", "unacknowledged", "by", "our", "laws;", "giving", "his", "assent", "to", "acts", "of", "pretended", "legislation:", "For", "quartering", "large", "bodies", "of", "armed", "troops", "among", "us:", "For", "protecting", "them,", "by", "a", "mock", "trial,", "from", "punishment", "for", "any", "murders", "which", "they", "should", "commit", "on", "the", "inhabitants", "of", "these", "states:", "For", "cutting", "off", "our", "trade", "with", "all", "parts", "of", "the", "world:", "For", "imposing", "taxes", "on", "us", "without", "our", "consent:", "For", "depriving", "us", "in", "many", "cases,", "of", "the", "benefits", "of", "trial", "by", "jury:", "For", "transporting", "us", "beyond", "seas", "to", "be", "tried", "for", "pretended", "offences:", "For", "abolishing", "the", "free", "system", "of", "English", "laws", "in", "a", "neighboring", "province,", "establishing", "therein", "an", "arbitrary", "government,", "and", "enlarging", "its", "boundaries", "so", "as", "to", "render", "it", "at", "once", "an", "example", "and", "fit", "instrument", "for", "introducing", "the", "same", "absolute", "rule", "into", "these", "colonies:", "For", "taking", "away", "our", "charters,", "abolishing", "our", "most", "valuable", "laws,", "and", "altering", "fundamentally", "the", "forms", "of", "our", "governments:", "For", "suspending", "our", "own", "legislatures,", "and", "declaring", "themselves", "invested", "with", "power", "to", "legislate", "for", "us", "in", "all", "cases", "whatsoever."];
+const PLAIN = "The first deposit consisted of ten hundred and fourteen pounds of gold, and thirty-eight hundred and twelve pounds of silver, deposited Nov. eighteen nineteen.";
+const OVERRIDE = { 811: "y" };   // Beale's key quirk: word 811 ("fundamentally") is read as Y
+
+const $ = id => document.getElementById(id);
+const frame = $("frame");
+let K = 1;                                    // current stage scale
+
+/* ---- build key text ---- */
+$("keytext").innerHTML = KEY.map((w, j) => {
+  const first = w[0], rest = w.slice(1);
+  return `<span class="kw" id="k${j + 1}"><span class="kn">${j + 1}</span><span class="kt"><span class="fl">${first}</span>${rest}</span></span> `;
+}).join("");
+
+/* ---- build ciphertext tape ---- */
+const PITCH = 114;
+$("tape").innerHTML = SEG.map((n, i) => `<div class="chip" id="c${i}"><span class="cn">${n}</span><span class="cl"></span></div>`).join("");
+function tapeTo(i) { $("tape").style.transform = `translateX(${904 + 26 - (i * PITCH + 50)}px)`; }
+tapeTo(0);
+
+/* ---- build plaintext (slots for letters, static punctuation) ---- */
+let slot = 0;
+$("plain").innerHTML = PLAIN.split(" ").map(w =>
+  `<span class="pw">` + [...w].map(ch => /[A-Za-z]/.test(ch) ? `<span class="pl" id="p${slot++}">${ch}</span>` : `<span class="pp">${ch}</span>`).join("") + `</span>`).join(" ");
+
+/* ---- helpers ---- */
+const letterOf = n => OVERRIDE[n] || KEY[n - 1][0].toLowerCase();
+const wordOf = n => KEY[n - 1].replace(/[^A-Za-z\-]+$/g, "");
+const pos = el => { const r = el.getBoundingClientRect(), f = frame.getBoundingClientRect(); return { x: (r.left - f.left) / K, y: (r.top - f.top) / K, w: r.width / K, h: r.height / K }; };
+const keyTo = n => { const el = $("k" + n), win = $("win"); const y = win.clientHeight / 2 - (el.offsetTop + el.offsetHeight / 2); $("keytext").style.transform = `translateY(${y}px)`; };
+keyTo(1);
+
+/* ---- animation ---- */
+let run = 0, paused = false, running = false, pauseWaiters = [];
+const speed = () => +$("speed").value;
+async function sleep(ms) {
+  await new Promise(r => setTimeout(r, ms / speed()));
+  while (paused) await new Promise(r => pauseWaiters.push(r));
+}
+function reset() {
+  document.querySelectorAll(".kw").forEach(e => e.classList.remove("hit", "used"));
+  document.querySelectorAll(".chip").forEach(e => { e.classList.remove("cur", "done"); e.querySelector(".cl").textContent = ""; });
+  document.querySelectorAll(".pl").forEach(e => e.classList.remove("f", "new"));
+  document.querySelectorAll(".fly").forEach(e => e.remove());
+  ["v1", "v2", "v3"].forEach(id => $(id).innerHTML = "&mdash;");
+  document.querySelectorAll(".step").forEach(e => e.classList.remove("act"));
+  $("plaincard").classList.remove("done");
+  $("keytext").style.transitionDuration = ""; $("tape").style.transitionDuration = "";
+  tapeTo(0); keyTo(1);
+}
+const dur = i => i < 3 ? 2300 : i < 8 ? 1150 : 520;     // slow for the first few, then quick
+
+async function play() {
+  const my = ++run; running = true; paused = false; reset(); $("play").innerHTML = "&#10074;&#10074; Pause";
+  await sleep(600);
+  for (let i = 0; i < SEG.length && run === my; i++) {
+    const n = SEG[i], D = dur(i), L = letterOf(n), w = wordOf(n);
+    const sp = speed();
+    $("keytext").style.transitionDuration = (D * 0.42 / sp) + "ms";
+    $("tape").style.transitionDuration = (D * 0.3 / sp) + "ms";
+    // 1. the number
+    document.querySelectorAll(".chip.cur").forEach(e => { e.classList.remove("cur"); e.classList.add("done"); });
+    $("c" + i).classList.add("cur"); tapeTo(i);
+    $("v1").textContent = n; $("v2").innerHTML = "&mdash;"; $("v3").innerHTML = "&mdash;";
+    $("s1").classList.add("act"); $("s2").classList.remove("act"); $("s3").classList.remove("act");
+    document.querySelectorAll(".kw.hit").forEach(e => { e.classList.remove("hit"); e.classList.add("used"); });
+    await sleep(D * 0.18); if (run !== my) return;
+    // 2. count to that word in the key
+    keyTo(n); $("k" + n).classList.add("hit");
+    $("v2").innerHTML = `word ${n}: <b>&ldquo;${w}&rdquo;</b>`;
+    $("s2").classList.add("act");
+    await sleep(D * 0.45); if (run !== my) return;
+    // 3. first letter flies down to the plaintext
+    $("s3").classList.add("act"); $("v3").textContent = L.toUpperCase();
+    const src = $("k" + n).querySelector(".fl"), dst = $("p" + i);
+    const a = pos(src), b = pos(dst);
+    const f = document.createElement("div"); f.className = "fly"; f.textContent = OVERRIDE[n] ? L : src.textContent;
+    f.style.left = a.x + "px"; f.style.top = a.y + "px"; f.style.transitionDuration = (D * 0.28 / sp) + "ms";
+    frame.appendChild(f);
+    void f.offsetWidth;
+    f.style.transform = `translate(${b.x + b.w / 2 - a.x - a.w / 2}px, ${b.y + b.h / 2 - a.y - a.h / 2}px)`;
+    await sleep(D * 0.3); if (run !== my) return;
+    f.remove();
+    dst.classList.add("f", "new"); $("c" + i).querySelector(".cl").textContent = L;
+    setTimeout(() => dst.classList.remove("new"), 400 / sp);
+    await sleep(D * 0.07);
+  }
+  if (run !== my) return;
+  document.querySelectorAll(".chip.cur").forEach(e => { e.classList.remove("cur"); e.classList.add("done"); });
+  document.querySelectorAll(".kw.hit").forEach(e => e.classList.remove("hit"));
+  document.querySelectorAll(".step").forEach(e => e.classList.remove("act"));
+  $("plaincard").classList.add("done");
+  running = false; $("play").innerHTML = "&#9654; Replay";
+}
+function toggle() {
+  if (!running) { play(); return; }
+  paused = !paused;
+  if (!paused) { pauseWaiters.forEach(r => r()); pauseWaiters = []; }
+  $("play").innerHTML = paused ? "&#9654; Resume" : "&#10074;&#10074; Pause";
+}
+$("play").onclick = toggle;
+$("restart").onclick = () => { paused = false; pauseWaiters.forEach(r => r()); pauseWaiters = []; play(); };
+$("speed").oninput = e => { $("sv").textContent = e.target.value + "×"; };
+
+/* ---- layout ---- */
+function fit() {
+  const v = $("view"), w = v.clientWidth, h = v.clientHeight; K = Math.min(w / 1920, h / 1080);
+  frame.style.left = (w - 1920 * K) / 2 + "px"; frame.style.top = (h - 1080 * K) / 2 + "px"; frame.style.transform = `scale(${K})`;
+}
+addEventListener("resize", fit); fit();
+addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); toggle(); }
+  else if (e.key === "h" || e.key === "H") { $("bar").classList.toggle("hidden"); $("view").classList.toggle("full"); fit(); }
+});
+</script>
+</body>
+</html>

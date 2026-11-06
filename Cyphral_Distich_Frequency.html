@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cyphral Distich Frequency Analysis</title>
+<style>
+:root {
+  --bg:#f7f4ec; --panel:#fffdf7; --ink:#2a2620; --muted:#7a7164; --rule:#e2dccd; --chip:#efe9da;
+  --accent:#9b3d1f; --accent-soft:#f3dccf; --accent2:#2f5f8f; --accent2-soft:#dbe6f2;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#1b1916; --panel:#24211d; --ink:#ece6da; --muted:#a1978a; --rule:#3a352e; --chip:#2e2a25;
+  --accent:#e08a5f; --accent-soft:#4a2f22; --accent2:#7fb3e6; --accent2-soft:#22364a; } }
+:root[data-theme="dark"] {
+  --bg:#1b1916; --panel:#24211d; --ink:#ece6da; --muted:#a1978a; --rule:#3a352e; --chip:#2e2a25;
+  --accent:#e08a5f; --accent-soft:#4a2f22; --accent2:#7fb3e6; --accent2-soft:#22364a; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:#000; overflow:hidden; }
+#view { position:absolute; left:0; right:0; top:0; bottom:52px; }
+#view.full { bottom:0; }
+#frame { position:absolute; width:1920px; height:1080px; transform-origin:0 0; background:var(--bg); color:var(--ink); overflow:hidden;
+  font:16px/1.4 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; padding:30px 56px 34px; display:flex; flex-direction:column; gap:20px; }
+.card { background:var(--panel); border:1px solid var(--rule); border-radius:14px; position:relative; }
+.lbl { font:600 15px/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+
+#cipher { padding:16px 28px 14px; display:flex; flex-direction:column; gap:10px; }
+.crow { display:flex; align-items:center; gap:20px; }
+.crow .tag { flex:0 0 96px; font:600 17px/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.12em; text-transform:uppercase; padding:8px 0; text-align:center; border-radius:18px; color:var(--c); background:var(--cs); }
+.crow.l1 { --c:var(--accent); --cs:var(--accent-soft); } .crow.l2 { --c:var(--accent2); --cs:var(--accent2-soft); }
+.nums { flex:1; display:flex; justify-content:space-between; }
+.num { font:600 29px/1.2 ui-monospace,"SF Mono",Menlo,Consolas,monospace; background:var(--chip); border-radius:7px; width:50px; text-align:center; padding:3px 0; font-variant-numeric:tabular-nums; transition:background .15s, color .15s, opacity .15s; }
+.num.done { background:var(--cs); color:var(--c); }
+.num.cur { background:var(--c); color:var(--bg); transform:scale(1.12); }
+
+#histcard { flex:1; min-height:0; padding:16px 28px 14px 28px; display:flex; flex-direction:column; }
+#histhead { display:flex; justify-content:space-between; align-items:baseline; }
+#legend { display:flex; gap:28px; font:600 18px/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; color:var(--muted); }
+#legend i { display:inline-block; width:16px; height:16px; border-radius:4px; vertical-align:-2px; margin-right:8px; }
+#counter { font:600 20px/1 ui-monospace,Menlo,monospace; color:var(--muted); }
+#plotwrap { flex:1; min-height:0; position:relative; margin-top:8px; display:flex; }
+#yaxis { width:44px; position:relative; }
+#yaxis span { position:absolute; right:10px; transform:translateY(50%); font:600 17px/1 ui-monospace,Menlo,monospace; color:var(--muted); }
+#plot { flex:1; position:relative; display:flex; align-items:stretch; }
+#grid { position:absolute; left:0; right:0; top:0; bottom:34px; pointer-events:none; }
+#grid div { position:absolute; left:0; right:0; border-top:1px solid var(--rule); }
+.col { flex:1; display:flex; flex-direction:column; align-items:center; position:relative; z-index:1; }
+.barzone { flex:1; width:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; position:relative; }
+.stack { width:70%; display:flex; flex-direction:column-reverse; border-radius:4px 4px 0 0; overflow:hidden; }
+.seg { width:100%; height:0; transition:height .25s cubic-bezier(.3,1.4,.5,1); }
+.seg.s1 { background:var(--accent); } .seg.s2 { background:var(--accent2); }
+.cnt { font:700 22px/1 ui-monospace,Menlo,monospace; height:26px; text-align:center; color:var(--ink); opacity:0; transition:opacity .2s; }
+.cnt.on { opacity:1; }
+.col.hot .stack { filter:brightness(1.25); }
+.col.hot .xl { color:var(--ink); font-weight:800; background:var(--chip); }
+.xl { height:34px; width:100%; text-align:center; font:600 15px/1 ui-monospace,Menlo,monospace; color:var(--muted); padding-top:9px; border-radius:0 0 5px 5px; border-top:2px solid var(--muted); }
+.fly { position:absolute; z-index:30; font:700 29px/1.2 ui-monospace,Menlo,monospace; border-radius:7px; padding:3px 0; width:50px; text-align:center; color:var(--bg); background:var(--c); pointer-events:none; transition:transform .3s cubic-bezier(.5,0,.3,1), opacity .3s; }
+
+#bar { position:fixed; left:0; right:0; bottom:0; height:52px; z-index:40; background:#111; color:#ddd; display:flex; align-items:center; gap:18px; padding:0 14px;
+  border-top:1px solid #333; font:13px/1.2 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; }
+#bar.hidden { display:none; }
+#bar button { font:inherit; font-weight:600; padding:6px 14px; border-radius:7px; cursor:pointer; border:1px solid #e08a5f; background:#e08a5f; color:#17140f; }
+#bar button.ghost { background:transparent; color:#e08a5f; }
+#bar .speed { color:#aaa; display:inline-flex; gap:8px; align-items:center; } #bar #sv { color:#ddd; min-width:36px; }
+#bar small { margin-left:auto; color:#777; }
+</style>
+</head>
+<body>
+<div id="view"><div id="frame">
+  <div class="card" id="cipher"></div>
+  <div class="card" id="histcard">
+    <div id="histhead">
+      <div class="lbl">Frequency of each cipher number</div>
+      <div id="legend"><span><i style="background:var(--accent)"></i>Line 1</span><span><i style="background:var(--accent2)"></i>Line 2</span></div>
+      <div id="counter">0 / 64 counted</div>
+    </div>
+    <div id="plotwrap"><div id="yaxis"></div><div id="plot"><div id="grid"></div></div></div>
+  </div>
+</div></div>
+
+<div id="bar">
+  <button id="play">&#9654; Start</button>
+  <button id="restart" class="ghost">Restart</button>
+  <label class="speed">Speed <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1"> <span id="sv">1&times;</span></label>
+  <small>Space: start/pause &middot; H: hide bar</small>
+</div>
+
+<script>
+const CIPHER = [
+  [5,3,27,38,32,14,21,8,66,8,70,39,5,9,12,18,2,3,56,5,1,7,3,2,13,19,3,25,9,3,16,6],
+  [25,15,13,6,11,20,5,1,2,12,1,20,20,49,20,20,35,33,4,6,8,35,5,38,5,5,18,10,3,11,32,42]
+];
+const MAXV = Math.max(...CIPHER.flat());                                   // 70
+const counts = [[], []]; for (let L = 0; L < 2; L++) for (let v = 0; v <= MAXV; v++) counts[L][v] = 0;
+const total = v => counts[0][v] + counts[1][v];
+const finalMax = (() => { const c = {}; CIPHER.flat().forEach(v => c[v] = (c[v] || 0) + 1); return Math.max(...Object.values(c)); })();
+const YMAX = finalMax + 1;
+const $ = id => document.getElementById(id), frame = $("frame");
+let K = 1;
+
+/* cipher rows */
+CIPHER.forEach((row, L) => {
+  const d = document.createElement("div"); d.className = "crow l" + (L + 1);
+  d.innerHTML = `<div class="tag">Line ${L + 1}</div><div class="nums">` + row.map((n, i) => `<span class="num" id="n${L}_${i}">${n}</span>`).join("") + `</div>`;
+  $("cipher").appendChild(d);
+});
+
+/* histogram columns 1..MAXV */
+const plot = $("plot");
+for (let v = 1; v <= MAXV; v++) {
+  const c = document.createElement("div"); c.className = "col"; c.id = "col" + v;
+  c.innerHTML = `<div class="barzone"><div class="cnt" id="cnt${v}"></div><div class="stack"><div class="seg s1" id="s1_${v}"></div><div class="seg s2" id="s2_${v}"></div></div></div><div class="xl">${v}</div>`;
+  plot.appendChild(c);
+}
+/* y axis + grid (positions are set once layout is known) */
+function layoutAxis() {
+  const zone = $("col1").querySelector(".barzone"), cnt = 26;
+  const plotH = zone.clientHeight - cnt, bottom = $("plot").clientHeight - 34;   // y of the baseline within #plot
+  const ya = $("yaxis"), gr = $("grid"); ya.innerHTML = ""; gr.innerHTML = "";
+  ya.style.height = $("plot").clientHeight + "px";
+  for (let t = 0; t <= YMAX; t++) {
+    const y = bottom - plotH * t / YMAX;
+    const s = document.createElement("span"); s.textContent = t; s.style.top = (y) + "px"; s.style.transform = "translateY(-50%)"; ya.appendChild(s);
+    const g = document.createElement("div"); g.style.top = y + "px"; gr.appendChild(g);
+  }
+  window.PLOTH = plotH;
+}
+function setBar(v) {
+  const unit = window.PLOTH / YMAX;
+  $("s1_" + v).style.height = counts[0][v] * unit + "px"; $("s2_" + v).style.height = counts[1][v] * unit + "px";
+  const c = $("cnt" + v); c.textContent = total(v) || ""; c.classList.toggle("on", total(v) > 0);
+}
+
+/* animation */
+let run = 0, paused = false, running = false, waiters = [];
+const speed = () => +$("speed").value;
+async function sleep(ms) { await new Promise(r => setTimeout(r, ms / speed())); while (paused) await new Promise(r => waiters.push(r)); }
+function reset() {
+  for (let L = 0; L < 2; L++) for (let v = 0; v <= MAXV; v++) { counts[L][v] = 0; if (v) setBar(v); }
+  document.querySelectorAll(".num").forEach(e => e.classList.remove("cur", "done"));
+  document.querySelectorAll(".col.hot").forEach(e => e.classList.remove("hot"));
+  document.querySelectorAll(".fly").forEach(e => e.remove());
+  $("counter").textContent = "0 / 64 counted";
+}
+const rel = el => { const r = el.getBoundingClientRect(), f = frame.getBoundingClientRect(); return { x: (r.left - f.left) / K, y: (r.top - f.top) / K, w: r.width / K, h: r.height / K }; };
+
+async function play() {
+  const my = ++run; running = true; paused = false; reset(); $("play").innerHTML = "&#10074;&#10074; Pause";
+  await sleep(500);
+  let n = 0;
+  for (let L = 0; L < 2 && run === my; L++) for (let i = 0; i < 32 && run === my; i++) {
+    const v = CIPHER[L][i], chip = $(`n${L}_${i}`), sp = speed();
+    document.querySelectorAll(".num.cur").forEach(e => { e.classList.remove("cur"); e.classList.add("done"); });
+    document.querySelectorAll(".col.hot").forEach(e => e.classList.remove("hot"));
+    chip.classList.add("cur");
+    // number lifts off the cipher and drops onto the top of its bar
+    const a = rel(chip), col = $("col" + v), stack = col.querySelector(".stack");
+    const topY = rel(stack).y + rel(stack).h;      // stack bottom is the baseline; the new segment grows upward from the current top
+    const barTop = rel(col.querySelector(".barzone")).y + rel(col.querySelector(".barzone")).h - total(v) * window.PLOTH / YMAX - 26 - 36;
+    const fly = document.createElement("div"); fly.className = "fly"; fly.textContent = v;
+    fly.style.setProperty("--c", L ? "var(--accent2)" : "var(--accent)");
+    fly.style.left = a.x + "px"; fly.style.top = a.y + "px"; fly.style.transitionDuration = (300 / sp) + "ms";
+    frame.appendChild(fly); void fly.offsetWidth;
+    const b = rel(col);
+    fly.style.transform = `translate(${b.x + b.w / 2 - a.x - a.w / 2}px, ${barTop - a.y}px)`;
+    await sleep(300);
+    if (run !== my) return;
+    fly.remove();
+    counts[L][v]++; n++; setBar(v); col.classList.add("hot");
+    $("counter").textContent = `${n} / 64 counted`;
+    await sleep(160);
+  }
+  if (run !== my) return;
+  document.querySelectorAll(".num.cur").forEach(e => { e.classList.remove("cur"); e.classList.add("done"); });
+  running = false; $("play").innerHTML = "&#9654; Replay";
+}
+function toggle() { if (!running) { play(); return; } paused = !paused; if (!paused) { waiters.forEach(r => r()); waiters = []; }
+  $("play").innerHTML = paused ? "&#9654; Resume" : "&#10074;&#10074; Pause"; }
+$("play").onclick = toggle;
+$("restart").onclick = () => { paused = false; waiters.forEach(r => r()); waiters = []; play(); };
+$("speed").oninput = e => { $("sv").textContent = e.target.value + "×"; };
+
+function fit() {
+  const v = $("view"), w = v.clientWidth, h = v.clientHeight; K = Math.min(w / 1920, h / 1080);
+  frame.style.left = (w - 1920 * K) / 2 + "px"; frame.style.top = (h - 1080 * K) / 2 + "px"; frame.style.transform = `scale(${K})`;
+}
+addEventListener("resize", fit); fit(); layoutAxis();
+addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); toggle(); }
+  else if (e.key === "h" || e.key === "H") { $("bar").classList.toggle("hidden"); $("view").classList.toggle("full"); fit(); }
+});
+</script>
+</body>
+</html>

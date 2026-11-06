@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Cyfral Octastick</title>
+<style>
+:root {
+  --bg:#f7f4ec; --panel:#fffdf7; --ink:#2a2620; --muted:#7a7164; --rule:#e2dccd;
+  --accent:#9b3d1f; --accent-soft:#f3dccf; --accent2:#2f5f8f; --accent2-soft:#dbe6f2; --hl:#fbe7a8; --hl-ink:#2a2620;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#1b1916; --panel:#24211d; --ink:#ece6da; --muted:#a1978a; --rule:#3a352e;
+  --accent:#e08a5f; --accent-soft:#4a2f22; --accent2:#7fb3e6; --accent2-soft:#22364a; --hl:#6a5518; --hl-ink:#fff6dc; } }
+:root[data-theme="dark"] {
+  --bg:#1b1916; --panel:#24211d; --ink:#ece6da; --muted:#a1978a; --rule:#3a352e;
+  --accent:#e08a5f; --accent-soft:#4a2f22; --accent2:#7fb3e6; --accent2-soft:#22364a; --hl:#6a5518; --hl-ink:#fff6dc; }
+* { box-sizing:border-box; }
+html,body { margin:0; height:100%; background:#000; overflow:hidden; }
+#view { position:absolute; left:0; right:0; top:0; bottom:52px; }
+#view.full { bottom:0; }
+#frame { position:absolute; width:1920px; height:1080px; transform-origin:0 0; overflow:hidden; background:var(--bg); color:var(--ink);
+  --serif:"Hoefler Text","EB Garamond",Garamond,"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; font-family:var(--serif); }
+#cam { position:absolute; left:0; top:0; width:1920px; height:1080px; transform-origin:0 0; transition:transform var(--dur,1.8s) cubic-bezier(.45,0,.2,1); }
+#layout { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:150px; padding:0 40px 0 100px; }
+#left { position:relative; transition:opacity .9s; isolation:isolate; }
+/* "Ai effect": the numbers sit on a dark console while the effect runs */
+#aipanel { position:absolute; inset:-34px -70px -34px -70px; z-index:-1; border-radius:18px; background:#0c1124; border:1px solid #3c4a86;
+  box-shadow:0 8px 30px rgba(20,30,80,.28); opacity:0; transition:opacity .5s; pointer-events:none; }
+#left.aifx #aipanel { opacity:1; }
+#left.aifx #title { color:#d6def5; }
+#left.aifx #nums { color:#d6def5; }
+#left.aifx .n { transition:none; }
+#aifx { position:absolute; z-index:12; pointer-events:none; opacity:0; display:none; transition:opacity .5s; }
+#aihud { position:absolute; z-index:13; right:-60px; top:-70px; display:none; align-items:center; gap:12px; padding:8px 18px 8px 14px; border-radius:22px; background:rgba(10,15,36,.94);
+  border:1px solid #3c4a86; font:600 16px/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.12em; color:#c4cff0; opacity:0; transition:opacity .5s; white-space:nowrap; }
+#aihud .pulse { width:10px; height:10px; border-radius:50%; background:#5fd3b0; animation:aipulse 1.1s ease-in-out infinite alternate; }
+@keyframes aipulse { to { opacity:.35; } }
+#aihud .aitxt { color:#8fa8ff; font-size:19px; letter-spacing:.1em; font-weight:700; }
+#aihud .abar { width:110px; height:5px; border-radius:3px; background:rgba(120,140,255,.2); overflow:hidden; }
+#aihud .abar i { display:block; height:100%; width:0; background:#7f98f0; }
+#aihud #aiinfo { min-width:170px; color:#93a3d6; font-weight:500; font-variant-numeric:tabular-nums; }
+#left.away { opacity:0; }
+#title { text-align:center; font-size:var(--fs); letter-spacing:.07em; margin:0 0 .75em; text-transform:uppercase; font-weight:400; white-space:nowrap; }
+#title span { padding:.08em .3em; border-radius:8px; transition:background .3s, box-shadow .3s, color .3s; }
+#title.on span { background:var(--hl); color:var(--hl-ink); box-shadow:0 0 0 4px var(--hl); }
+#nums { position:relative; font-size:var(--fs); line-height:1.3; font-variant-numeric:oldstyle-nums proportional-nums; }
+.nl { margin:0 0 .26em; position:relative; }
+.nl:last-child { margin:0; }
+.row { display:block; width:fit-content; white-space:nowrap; position:relative; isolation:isolate; padding:.02em .3em; margin-left:-.3em; }
+.row.ind { margin-left:calc(2.6em - .3em); }
+.row::before { content:""; position:absolute; inset:0; border-radius:.3em; background:var(--hlc,var(--hl)); z-index:-1; transform:scaleX(0); transform-origin:left; transition:transform var(--sw,.45s) ease-out, opacity .4s; }
+.row.hl::before { transform:scaleX(1); } .row.out::before { opacity:0; } .row.nt::before { transition:none; }
+.n { border-radius:.2em; transition:background .12s, color .12s; }
+.n.on { background:var(--hl); color:var(--hl-ink); box-shadow:0 0 0 .1em var(--hl); }
+#nums.oct { --hlc:var(--accent-soft); }
+#nums .deca { --hlc:var(--accent2-soft); }
+#nums .deca .n.on { background:var(--accent2); color:#fff; box-shadow:0 0 0 .1em var(--accent2); }
+.gl { position:absolute; left:-2.3em; top:.18em; width:1.55em; text-align:center; font:600 .5em/1.55 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; border-radius:50%; background:var(--accent); color:var(--bg); opacity:0; transition:opacity .25s; font-variant-numeric:lining-nums; }
+.gl.on { opacity:1; } .deca .gl { background:var(--accent2); }
+#brace { position:absolute; overflow:visible; pointer-events:none; }
+#brace path { fill:none; stroke:var(--accent); stroke-width:5; stroke-linecap:round; stroke-dasharray:1; stroke-dashoffset:1; transition:stroke-dashoffset .9s ease; }
+#brace.on path { stroke-dashoffset:0; }
+#blabel { position:absolute; writing-mode:vertical-rl; font:600 calc(var(--fs)*.46)/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.2em; color:var(--accent); opacity:0; transition:opacity .5s; white-space:nowrap; font-variant-numeric:lining-nums; }
+#blabel.on { opacity:1; }
+#chip { position:absolute; font:700 calc(var(--fs)*.5)/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.14em; padding:.45em 1em; border-radius:2em; background:var(--accent2); color:#fff; opacity:0; transition:opacity .4s; white-space:nowrap; font-variant-numeric:lining-nums; }
+#chip.on { opacity:1; }
+#right { position:relative; }
+#poem { font-size:var(--pfs); line-height:1.5; transition:opacity .8s; }
+#poem.dim { opacity:.2; }
+.pl { white-space:nowrap; transition:opacity .6s; } .pl.ind { margin-left:1.4em; }
+.pl.faded { opacity:.16; }
+.w { border-radius:.2em; padding:.02em 0; margin-right:.26em; transition:opacity .25s, background .15s, color .15s, box-shadow .15s; }
+.w.hlw { background:var(--hl); color:var(--hl-ink); box-shadow:0 0 0 .13em var(--hl), 0 .06em .5em .1em rgba(0,0,0,.08); }
+.w.mod { background:var(--accent-soft); color:var(--accent); box-shadow:0 0 0 .13em var(--accent-soft); }
+.w.hlw.mod { background:var(--hl); color:var(--hl-ink); box-shadow:0 0 0 .13em var(--hl); }
+.tx.struck { color:#c0392b; text-decoration:line-through; text-decoration-thickness:.08em; }
+.ins { display:inline-block; overflow:hidden; vertical-align:bottom; white-space:nowrap; max-width:0; opacity:0; color:var(--accent); transition:max-width .6s ease, opacity .5s; }
+.ins.grow { max-width:1em; opacity:1; }
+.bubble { position:absolute; z-index:6; width:calc(var(--pfs)*11); background:var(--panel); color:var(--ink); border:.08em solid var(--accent); border-radius:.5em; padding:.45em .7em .5em;
+  box-shadow:0 .3em 1.1em rgba(0,0,0,.2); font-size:calc(var(--pfs)*.5); line-height:1.38; opacity:0; transform:translateY(.4em) scale(.96); transition:opacity .45s, transform .45s; pointer-events:none; white-space:normal; }
+.bubble.on { opacity:1; transform:none; }
+.bubble .bt { font:700 .72em/1 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:.16em; text-transform:uppercase; color:var(--accent); margin-bottom:.4em; }
+.bubble .bg { margin-top:.45em; padding-top:.4em; border-top:1px solid var(--rule); color:var(--muted); font-size:.88em; font-style:italic; }
+.bubble::after { content:""; position:absolute; left:var(--tx,50%); width:.7em; height:.7em; background:var(--panel); border:solid var(--accent); border-width:0 .08em .08em 0; transform:translateX(-50%) rotate(45deg); }
+.bubble.above::after { bottom:-.42em; } .bubble.below::after { top:-.42em; transform:translateX(-50%) rotate(225deg); }
+.reading .w { opacity:.32; } .reading .w.read { opacity:1; }
+.reading .w.cur { opacity:1; background:var(--hl); color:var(--hl-ink); box-shadow:0 0 0 .13em var(--hl), 0 .06em .5em .1em rgba(0,0,0,.08); }
+#cap { position:absolute; left:0; right:0; bottom:0; text-align:center; padding:60px 120px 34px; background:linear-gradient(rgba(0,0,0,0), var(--bg) 45%); font:600 40px/1.3 var(--serif); color:var(--ink); opacity:0; transition:opacity .4s; pointer-events:none; }
+#cap.show { opacity:1; } #cap.off { display:none; }
+#bar { position:fixed; left:0; right:0; bottom:0; height:52px; z-index:40; background:#111; color:#ddd; display:flex; align-items:center; gap:16px; padding:0 14px;
+  border-top:1px solid #333; font:13px/1.2 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; }
+#bar.hidden { display:none; }
+#bar button { font:inherit; font-weight:600; padding:6px 14px; border-radius:7px; cursor:pointer; border:1px solid #e08a5f; background:#e08a5f; color:#17140f; }
+#bar button.ghost { background:transparent; color:#e08a5f; }
+#bar button:disabled { opacity:.4; cursor:default; }
+#bar button.ai { border:0; color:#fff; background:linear-gradient(100deg,#3d6fd1,#7a5cd6); }
+#aistop[hidden] { display:none; }
+#bar label { color:#aaa; display:inline-flex; gap:8px; align-items:center; } #bar .v { color:#ddd; min-width:40px; }
+#bar input[type=range] { width:120px; }
+#bar small { margin-left:auto; color:#777; }
+</style>
+</head>
+<body>
+<div id="view"><div id="frame">
+  <div id="cam"><div id="layout">
+    <div id="left">
+      <div id="aipanel"></div>
+      <h1 id="title"><span>The Cyfral Octastick</span></h1>
+      <div id="nums"></div>
+      <svg id="brace" viewBox="0 0 1 1"><path id="bpath" pathLength="1" d=""/></svg>
+      <div id="blabel">THE OCTASTICK &middot; 8 LINES</div>
+      <div id="chip">DECAGRAM</div>
+      <canvas id="aifx"></canvas>
+      <div id="aihud"><span class="pulse"></span><span class="aitxt">AI</span><span id="aiphase">SCANNING</span><span id="aiinfo"></span><div class="abar"><i id="aibar"></i></div></div>
+    </div>
+    <div id="right"><div id="poem" class="dim"></div><div id="bubble" class="bubble"><div class="bt"></div><div class="bd"></div><div class="bg"></div></div></div>
+  </div></div>
+  <div id="cap"></div>
+</div></div>
+
+<div id="bar">
+  <button id="play">&#9654; Start</button>
+  <button id="restart" class="ghost">Restart</button>
+  <button id="aiBtn" class="ai" type="button">✦ Ai effect</button>
+  <button id="aistop" class="ghost" type="button" hidden>■ Stop</button>
+  <label>Ai effect time <input id="aidur" type="range" min="2" max="15" step="0.5" value="5"> <span class="v" id="aiv">5 s</span></label>
+  <label>Speed <input id="speed" type="range" min="0.5" max="2" step="0.25" value="1"> <span class="v" id="sv">1&times;</span></label>
+  <label>Poem pace <input id="pace" type="range" min="1" max="4" step="0.1" value="2.4"> <span class="v" id="pv">2.4 w/s</span></label>
+  <label><input type="checkbox" id="capchk"> Captions</label>
+  <small>Space: start/pause &middot; H: hide bar</small>
+</div>
+
+<script>
+/* The Cyfral Octastick, transcribed from the printed page (pp. 212-213 of the modern edition): 8 lines + the decagram.
+   ROW1[i] = how many numbers sit on the first printed row of line i; the rest wrap to a hanging-indent second row, as in print. */
+const LINES = [[25, 11, 39, 4, 4, 10, 3, 54, 50, 19, 1, 18, 1, 5, 9, 58, 15, 1, 4, 17, 1, 42, 32, 77, 23, 75, 6, 3, 18, 20, 36, 8, 21], [4, 10, 22, 3, 5, 11, 3, 162, 18, 21, 44, 79, 42, 2, 17, 61, 32, 7, 7, 107, 8, 59, 28, 54, 31, 113, 42, 31, 5, 19, 32, 3, 115, 3, 22], [1, 16, 96, 31, 87, 5, 88, 1, 4, 30, 10, 15, 8, 47, 28, 17, 139, 17, 69, 5, 29, 9, 9, 1, 51, 6, 114, 8, 34, 30, 2, 18, 24, 41, 33, 74, 93, 8], [5, 12, 58, 162, 12, 44, 1, 66, 9, 15, 100, 42, 2, 28, 16, 6, 27, 4, 196, 70, 53, 7, 1, 69, 2, 15, 89, 34, 11, 13, 12, 29, 15, 76, 40, 22, 8, 24, 75], [3, 58, 15, 2, 1, 4, 5, 56, 5, 5, 2, 4, 12, 20, 19, 14, 80, 37, 45, 34, 3, 95, 6, 38, 1, 18, 11, 27, 4, 13, 7, 24], [5, 20, 5, 87, 40, 25, 9, 56, 21, 29, 2, 81, 50, 147, 2, 6, 16, 15, 14, 9, 13, 27, 3, 16, 14, 7, 6, 2, 10, 16, 69, 1, 44], [38, 3, 3, 2, 10, 34, 8, 18, 9, 28, 2, 4, 6, 2, 201, 10, 13, 6, 1, 36, 1, 31, 4, 17, 54, 16, 5, 22, 11, 5, 31], [71, 96, 15, 45, 19, 6, 64, 10, 42, 7, 83, 37, 6, 3, 7, 74, 4, 14, 8, 91, 27, 12, 11, 2, 28, 50, 68, 3, 2, 12, 1, 5, 49, 3], [7, 7, 95, 66, 1, 11, 33, 51, 50, 6]];
+const ROW1 = [27, 27, 28, 27, 30, 29, 30, 29, 10];
+const POEM = [
+  "To this *Octastick* if you will subjoyn",
+  "A *Decagram* of this same stuff of mine,",
+  "All gather’d out of my *Exskybalorum*,",
+  "You’ll finde a Rule, by which, with great decorum,",
+  "You may most comfortably regulate",
+  "Your actions, thoughts and speeches; and know that",
+  "~I love an *Aphaeresified* treason",
+  "~Better then any *Prosthesized* Reason."
+];
+const NARR = [
+  "and is associated with a longer cipher called “The Cyfral Octastick”.",
+  "It consists of 8 lines with 32 numbers each.",
+  "Those 8 lines form the octastick, or 8-line poem, and they are followed by a so-called decagram of 10 numbers.",
+  "Like the cyphral distich, this cipher is also followed by an unusual poem"
+];
+const $ = id => document.getElementById(id), frame = $("frame"), cam = $("cam");
+let K = 1;
+
+/* ---------- build ---------- */
+const nums = $("nums");
+LINES.forEach((ln, i) => {
+  const d = document.createElement("div"); d.className = "nl" + (i === 8 ? " deca" : ""); d.id = "nl" + i;
+  const mk = a => a.map(n => `<span class="n">${n}.</span>`).join("");
+  d.innerHTML = `<span class="gl">${i === 8 ? "9" : i + 1}</span><span class="row r1">${mk(ln.slice(0, ROW1[i]))}</span>` +
+    (ln.length > ROW1[i] ? `<span class="row r2 ind">${mk(ln.slice(ROW1[i]))}</span>` : "");
+  nums.appendChild(d);
+});
+const poem = $("poem");
+function wordHtml(raw, li, wi) {
+  const it = /^\*(.*?)\*([^*]*)$/.exec(raw), core = it ? it[1] : raw, tail = it ? it[2] : "";
+  if (li === 6 && wi === 2) return `<span class="w">a<span class="nn">n</span></span>`;                                  // "an": loses its n, so "I love a reason"
+  if (li === 6 && wi === 4) return `<span class="w"><span class="tx">t</span>reason</span>`;                               // "treason": its t can be taken away
+  if (li === 7 && wi === 4) return `<span class="w"><span class="ins">t</span><span class="rr">R</span>eason.</span>`;      // "Reason.": a t can be put back
+  return `<span class="w">${it ? `<i>${core}</i>${tail}` : core}</span>`;
+}
+function lineHtml(li) {
+  let l = POEM[li]; const ind = l[0] === "~"; if (ind) l = l.slice(1);
+  return `<div class="pl${ind ? " ind" : ""}">` + l.split(" ").map((w, wi) => wordHtml(w, li, wi)).join("") + `</div>`;
+}
+let WORDS = [];
+function buildPoem() { poem.innerHTML = POEM.map((_, i) => lineHtml(i)).join(""); WORDS = [...poem.querySelectorAll(".w")]; }
+buildPoem();
+const LENS = WORDS.map(w => w.textContent.replace(/[^A-Za-z’]/g, "").length), AVGLEN = LENS.reduce((a, b) => a + b, 0) / LENS.length;
+
+/* ---------- fit: one shared type scale so everything fills the 16:9 frame ---------- */
+function layout() {
+  const T = 40, L = $("left"), R = $("right");
+  frame.style.setProperty("--fs", T + "px"); frame.style.setProperty("--pfs", T * 1.12 + "px");
+  // measure with layout sizes (offset*), which ignore the camera transform
+  const wl = Math.max(...[...document.querySelectorAll(".row")].map(r => r.offsetWidth)),
+        wp = Math.max(...[...document.querySelectorAll(".pl")].map(r => r.scrollWidth)),
+        hl = L.offsetHeight;
+  const s = Math.min((1920 - 100 - 40 - 150 - 70) * T / (wl + wp * 1.0 + 4), 920 * T / hl, 50);   // 70 = gutter labels
+  frame.style.setProperty("--fs", s + "px"); frame.style.setProperty("--pfs", s * 1.12 + "px");
+  // brace + label beside lines 1-8
+  const a = $("nl0"), b = $("nl7"), top = a.offsetTop, h = b.offsetTop + b.offsetHeight - top, w = Math.max(...[...document.querySelectorAll(".row")].map(r => r.offsetLeft + r.offsetWidth));
+  const br = $("brace"), bw = 26; br.style.left = (w + 30) + "px"; br.style.top = (nums.offsetTop + top) + "px"; br.style.width = bw + "px"; br.style.height = h + "px";
+  br.setAttribute("viewBox", `0 0 ${bw} ${h}`);
+  const m = h / 2, r = 20;
+  $("bpath").setAttribute("d", `M2,2 Q${bw - 6},2 ${bw - 6},${r + 2} L${bw - 6},${m - r} Q${bw - 6},${m} ${bw},${m} Q${bw - 6},${m} ${bw - 6},${m + r} L${bw - 6},${h - r - 2} Q${bw - 6},${h - 2} 2,${h - 2}`);
+  const bl = $("blabel"); bl.style.left = (w + 30 + bw + 14) + "px"; bl.style.top = (nums.offsetTop + top + m) + "px"; bl.style.transform = "translateY(-50%)";
+  const dn = $("nl8"), dr = dn.querySelector(".row"), ch = $("chip");
+  ch.style.left = (dr.offsetLeft + dr.offsetWidth + 40) + "px"; ch.style.top = (nums.offsetTop + dn.offsetTop + dn.offsetHeight / 2) + "px"; ch.style.transform = "translateY(-50%)";
+}
+function fit() { const v = $("view"), w = v.clientWidth, h = v.clientHeight; K = Math.min(w / 1920, h / 1080);
+  frame.style.left = (w - 1920 * K) / 2 + "px"; frame.style.top = (h - 1080 * K) / 2 + "px"; frame.style.transform = `scale(${K})`; }
+const rectIn = el => { const r = el.getBoundingClientRect(), f = frame.getBoundingClientRect(); return { x: (r.left - f.left) / K, y: (r.top - f.top) / K, w: r.width / K, h: r.height / K }; };
+function camTo(rect, dur, maxS = 1.8) {
+  const s = Math.min(maxS, 1920 * 0.9 / rect.w, 1080 * 0.82 / rect.h), cx = rect.x + rect.w / 2, cy = rect.y + rect.h / 2;
+  cam.style.setProperty("--dur", dur + "s"); cam.style.transform = `translate(${960 - cx * s}px,${520 - cy * s}px) scale(${s})`;
+}
+const camHome = dur => { cam.style.setProperty("--dur", dur + "s"); cam.style.transform = "none"; };
+
+/* ---------- playback ---------- */
+let run = 0, paused = false, running = false, waiters = [];
+const speed = () => +$("speed").value, pace = () => +$("pace").value;
+async function sleep(ms) { await new Promise(r => setTimeout(r, ms / speed())); while (paused) await new Promise(r => waiters.push(r)); }
+const rows = () => [...document.querySelectorAll(".row")], lineRows = i => [...$("nl" + i).querySelectorAll(".row")];
+function hlLine(i, sw = .45) { lineRows(i).forEach((r, k) => { r.style.setProperty("--sw", (sw / speed()) + "s"); r.style.transitionDelay = ""; r.classList.remove("out"); r.classList.add("hl"); }); }
+function clearHl() {
+  const hs = rows().filter(r => r.classList.contains("hl")); hs.forEach(r => r.classList.add("out"));
+  setTimeout(() => hs.forEach(r => { r.classList.add("nt"); r.classList.remove("hl", "out"); void r.offsetWidth; r.classList.remove("nt"); }), 450);
+}
+function caption(i) { const c = $("cap"); c.textContent = typeof i === "number" ? NARR[i] : i; c.classList.add("show"); }
+function reset() {
+  clearHl(); rows().forEach(r => r.classList.remove("hl", "out"));
+  $("nums").classList.remove("oct"); $("title").classList.remove("on"); $("brace").classList.remove("on"); $("blabel").classList.remove("on"); $("chip").classList.remove("on");
+  document.querySelectorAll(".gl.on,.n.on").forEach(e => e.classList.remove("on"));
+  buildPoem(); poem.classList.add("dim"); poem.classList.remove("reading"); $("bubble").classList.remove("on"); $("cap").classList.remove("show");
+  $("left").classList.remove("away"); camHome(0);
+}
+/* read a run of words aloud: current word lit, finished words solid, upcoming words faded */
+async function readWords(words, A) {
+  for (let i = 0; i < words.length && A(); i++) {
+    words.forEach(w => w.classList.remove("cur")); if (i) words[i - 1].classList.add("read");
+    words[i].classList.add("cur");
+    const t = words[i].textContent, last = i === words.length - 1 || words[i + 1].parentNode !== words[i].parentNode;
+    const len = words[i].textContent.replace(/[^A-Za-z’]/g, "").length;
+    await sleep(1000 / pace() * (0.55 + 0.45 * len / AVGLEN) * (/[,;]$/.test(t) ? 1.55 : 1) * (last ? 1.6 : 1));
+  }
+  if (!A()) return;
+  words[words.length - 1].classList.add("read"); words.forEach(w => w.classList.remove("cur"));
+}
+const layoutRect = (...els) => {      // layout-space rectangle (ignores the camera transform)
+  const r = $("right"), xs = els.map(e => r.offsetLeft + e.offsetLeft), ys = els.map(e => r.offsetTop + e.offsetTop);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), x1 = Math.max(...els.map((e, i) => xs[i] + e.offsetWidth)), y1 = Math.max(...els.map((e, i) => ys[i] + e.offsetHeight));
+  return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+};
+function collapse(el) {                // shrink a word (or letter) away to nothing, closing the gap
+  el.style.display = "inline-block"; el.style.overflow = "hidden"; el.style.verticalAlign = "bottom"; el.style.whiteSpace = "nowrap";
+  el.style.maxWidth = el.offsetWidth + "px"; void el.offsetWidth;
+  el.style.transition = `max-width ${.6 / speed()}s ease, opacity ${.45 / speed()}s, margin ${.6 / speed()}s`;
+  el.style.maxWidth = "0px"; el.style.opacity = "0"; el.style.marginRight = "0px";
+}
+const BUBBLES = {
+  aph: ["Aphaeresis", "Taking away the beginning sound or letters of a word.", "Margin note: <i>Aphaeresified</i> = “suppressed”"],
+  pro: ["Prosthesis", "Putting back a missing piece: a letter or sound added to the start of a word, or an artificial replacement for a missing limb.", "Margin note: <i>Prosthesized</i> = “added”"]
+};
+function showBubble(el, key, where) {
+  const b = $("bubble"), [t, d, g] = BUBBLES[key];
+  b.className = "bubble " + where; b.querySelector(".bt").textContent = t; b.querySelector(".bd").textContent = d; b.querySelector(".bg").innerHTML = g;
+  const gap = parseFloat(getComputedStyle(poem).fontSize) * .5, left = el.offsetLeft + el.offsetWidth / 2 - b.offsetWidth / 2;
+  b.style.left = left + "px"; b.style.top = (where === "above" ? el.offsetTop - b.offsetHeight - gap : el.offsetTop + el.offsetHeight + gap) + "px";
+  b.style.setProperty("--tx", (el.offsetLeft + el.offsetWidth / 2 - left) + "px");
+  void b.offsetWidth; b.classList.add("on");
+}
+const hideBubble = () => $("bubble").classList.remove("on");
+
+/* the wordplay at the end of the poem (lines 7 and 8) */
+async function wordplay(A) {
+  const lines = [...poem.children], L7 = lines[6], L8 = lines[7], w7 = [...L7.querySelectorAll(".w")], w8 = [...L8.querySelectorAll(".w")];
+  poem.classList.remove("reading"); WORDS.forEach(w => w.classList.remove("read", "cur"));
+  /* "And there's some interesting wordplay at the end, which might hint at how decipherment involves the first letters of words." */
+  caption("And there’s some interesting wordplay at the end, which might hint at how decipherment involves the first letters of words.");
+  lines.forEach((l, i) => l.classList.toggle("faded", i < 6));
+  camTo(layoutRect(L7, L8), 1.6 / speed(), 2.0); await sleep(8100); if (!A()) return;
+
+  /* “I love an Aphaeresified treason” */
+  caption("“I love an Aphaeresified treason”"); L8.classList.add("faded"); $("cap").classList.add("show");
+  L7.classList.add("reading"); await readWords(w7, A); if (!A()) return; L7.classList.remove("reading"); await sleep(500); if (!A()) return;
+  /* "Aphaeresis means to take away the beginning sound or letters from a word." */
+  caption("Aphaeresis means to take away the beginning sound or letters from a word.");
+  w7[3].classList.add("hlw"); showBubble(w7[3], "aph", "above"); await sleep(5200); if (!A()) return;
+  /* "So maybe “treason” becomes “reason”." */
+  caption("So maybe “treason” becomes “reason”."); hideBubble(); w7[4].classList.add("hlw"); await sleep(800); if (!A()) return;
+  const tx = w7[4].querySelector(".tx"); tx.classList.add("struck"); await sleep(700); if (!A()) return;
+  collapse(tx); await sleep(500); collapse(w7[3]); collapse(w7[2].querySelector(".nn")); w7[3].classList.remove("hlw"); await sleep(900); if (!A()) return;
+  w7[4].classList.remove("hlw"); w7[4].classList.add("mod"); await sleep(900); if (!A()) return;
+
+  /* “Better than any Prosthesized Reason.” */
+  caption("“Better than any Prosthesized Reason.”"); L7.classList.add("faded"); L8.classList.remove("faded");
+  L8.classList.add("reading"); await readWords(w8, A); if (!A()) return; L8.classList.remove("reading"); await sleep(500); if (!A()) return;
+  /* "“Prosthesis” suggests to put back the missing piece, like an artificial limb." */
+  caption("“Prosthesis” suggests to put back the missing piece, like an artificial limb.");
+  w8[3].classList.add("hlw"); showBubble(w8[3], "pro", "below"); await sleep(5200); if (!A()) return;
+  /* "Maybe “reason” becomes “treason”." */
+  caption("Maybe “reason” becomes “treason”."); hideBubble(); w8[4].classList.add("hlw"); await sleep(800); if (!A()) return;
+  collapse(w8[3]); w8[3].classList.remove("hlw"); await sleep(800); if (!A()) return;
+  w8[4].querySelector(".ins").classList.add("grow"); await sleep(700); if (!A()) return;
+  w8[4].querySelector(".rr").textContent = "r"; w8[4].classList.remove("hlw"); w8[4].classList.add("mod"); await sleep(1000); if (!A()) return;
+
+  /* "Is he saying here, he loves Reason better than Treason?" */
+  caption("Is he saying here, he loves Reason better than Treason?"); L7.classList.remove("faded");
+  w7[4].classList.remove("mod"); w8[4].classList.remove("mod"); await sleep(1700); if (!A()) return;
+  for (const [el, wait] of [[w7[1], 500], [w7[4], 650], [[w8[0], w8[1]], 450], [w8[4], 900]]) {
+    [].concat(el).forEach(e => e.classList.add("hlw")); await sleep(wait); if (!A()) return;
+  }
+  await sleep(3200); if (!A()) return;
+  /* put the poem back as printed before the camera pulls out */
+  L7.style.opacity = L8.style.opacity = "0"; await sleep(500); if (!A()) return;
+  L7.outerHTML = lineHtml(6); L8.outerHTML = lineHtml(7); WORDS = [...poem.querySelectorAll(".w")];
+  poem.querySelectorAll(".pl").forEach(l => l.classList.remove("faded")); $("cap").classList.remove("show"); await sleep(500);
+}
+
+async function play() {
+  if (aiRunning) return;
+  const my = ++run, A = () => run === my; running = true; paused = false; reset(); $("play").innerHTML = "&#10074;&#10074; Pause"; aiButtons();
+  await sleep(900); if (!A()) return;
+
+  /* 1  "...a longer cipher called 'The Cyfral Octastick'." */
+  caption(0); await sleep(2600); if (!A()) return;
+  $("title").classList.add("on"); await sleep(2400); if (!A()) return;
+  $("title").classList.remove("on"); await sleep(700); if (!A()) return;
+
+  /* 2  "It consists of 8 lines with 32 numbers each." */
+  caption(1); await sleep(900); if (!A()) return;
+  for (let i = 0; i < 8 && A(); i++) { $("nl" + i).querySelector(".gl").classList.add("on"); hlLine(i, .35); await sleep(240); }
+  if (!A()) return; await sleep(700); if (!A()) return;
+  clearHl(); document.querySelectorAll(".gl.on").forEach(e => e.classList.remove("on")); await sleep(500); if (!A()) return;
+  const per = LINES.slice(0, 8).map((_, i) => [...$("nl" + i).querySelectorAll(".n")]);     // wave of numbers along every line
+  const maxN = Math.max(...per.map(p => p.length));
+  for (let k = 0; k < maxN + 1 && A(); k++) {
+    per.forEach(p => { if (p[k - 1]) p[k - 1].classList.remove("on"); if (p[k]) p[k].classList.add("on"); });
+    await sleep(42);
+  }
+  per.forEach(p => p.forEach(n => n.classList.remove("on"))); await sleep(900); if (!A()) return;
+
+  /* 3  "Those 8 lines form the octastick ... followed by a so-called decagram of 10 numbers." */
+  caption(2); await sleep(700); if (!A()) return;
+  $("nums").classList.add("oct"); for (let i = 0; i < 8; i++) hlLine(i, .6);
+  $("brace").classList.add("on"); $("blabel").classList.add("on"); await sleep(4300); if (!A()) return;
+  const dn = [...$("nl8").querySelectorAll(".n")], chip = $("chip");
+  hlLine(8, .5); chip.textContent = "DECAGRAM"; chip.classList.add("on"); $("nl8").querySelector(".gl").classList.add("on"); await sleep(900); if (!A()) return;
+  for (let k = 0; k < dn.length && A(); k++) { if (k) dn[k - 1].classList.remove("on"); dn[k].classList.add("on"); chip.textContent = `DECAGRAM · ${k + 1}`; await sleep(300); }
+  if (!A()) return; chip.textContent = "DECAGRAM · 10 NUMBERS"; await sleep(1500); if (!A()) return;
+  dn.forEach(n => n.classList.remove("on"));
+
+  /* 4  "...also followed by an unusual poem"  ->  zoom in and read it a word at a time */
+  caption(3); await sleep(1500); if (!A()) return;
+  clearHl(); $("brace").classList.remove("on"); $("blabel").classList.remove("on"); chip.classList.remove("on"); document.querySelectorAll(".gl.on").forEach(e => e.classList.remove("on"));
+  $("left").classList.add("away"); poem.classList.remove("dim"); camTo(rectIn(poem), 1.8 / speed()); await sleep(2300); if (!A()) return;
+  $("cap").classList.remove("show");
+  poem.classList.add("reading");
+  await readWords(WORDS, A); if (!A()) return;
+  await sleep(900); if (!A()) return;
+  await wordplay(A); if (!A()) return;
+  await sleep(600); if (!A()) return;
+  poem.classList.remove("reading"); $("left").classList.remove("away"); camHome(2 / speed()); await sleep(2600); if (!A()) return;
+  running = false; $("play").innerHTML = "&#9654; Replay"; aiButtons();
+}
+function toggle() { if (aiRunning) { aiPaused = !aiPaused; aiButtons(); return; } if (!running) { play(); return; } paused = !paused; if (!paused) { waiters.forEach(r => r()); waiters = []; }
+  $("play").innerHTML = paused ? "&#9654; Resume" : "&#10074;&#10074; Pause"; }
+$("play").onclick = toggle;
+$("restart").onclick = () => { paused = false; waiters.forEach(r => r()); waiters = []; play(); };
+
+/* ---------- "Ai effect": a quiet scan of every number; nothing is deciphered and the numbers end up as printed ---------- */
+function buildAiEffect(durMs) {
+  const left = $("left"), cv = $("aifx"), hud = $("aihud");
+  const chips = [...document.querySelectorAll("#nums .n")], N = chips.length, orig = chips.map(c => c.textContent);
+  const lr = left.getBoundingClientRect(), M = 100, PX = 70, PY = 34;
+  const W = lr.width / K + 2 * M, H = lr.height / K + 2 * M, S = 2;
+  Object.assign(cv.style, { left: -M + "px", top: -M + "px", width: W + "px", height: H + "px", display: "block" }); cv.width = W * S; cv.height = H * S;
+  const ctx = cv.getContext("2d"); ctx.setTransform(S, 0, 0, S, 0, 0);
+  // lock each number's width so scrambled digits can't shift the layout
+  const rects = chips.map(c => c.getBoundingClientRect());
+  const fsPx = parseFloat(getComputedStyle(chips[0]).fontSize);                                                   // widths in em, so a re-layout can't desync them from the text
+  chips.forEach((c, i) => { c.style.display = "inline-block"; c.style.width = rects[i].width / K / fsPx + "em"; c.style.textAlign = "left"; c.style.whiteSpace = "nowrap"; });
+  const pos = chips.map((c, i) => ({ x: (rects[i].left + rects[i].width / 2 - lr.left) / K + M, y: (rects[i].top + rects[i].height / 2 - lr.top) / K + M }));
+  const rowOf = [], rows = [];
+  pos.forEach((p, i) => { let k = rows.findIndex(r => Math.abs(r.y - p.y) < 8); if (k < 0) { k = rows.length; rows.push({ y: p.y, x0: p.x, x1: p.x }); } rows[k].x0 = Math.min(rows[k].x0, p.x); rows[k].x1 = Math.max(rows[k].x1, p.x); rowOf[i] = k; });
+  const rh = Math.max(14, Math.min(...rects.map(r => r.height / K)) * .55);
+  const cnt = {}; orig.forEach((t, i) => { const v = t.replace(".", ""); (cnt[v] = cnt[v] || []).push(i); });   // the most repeated numbers get linked up
+  const top = Object.entries(cnt).sort((a, b) => b[1].length - a[1].length || +a[0] - +b[0]).slice(0, 4).map(([v, idx], k) => ({ v, idx, hue: [196, 262, 38, 160][k] }));
+  const valOf = chips.map((_, i) => top.findIndex(t => t.idx.includes(i)));
+  const rnd = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return x - Math.floor(x); };
+  // phases as fractions of the chosen duration
+  const D = durMs, T1 = D * .06, T2 = T1 + D * .46, T3 = T2 + D * .24, T4 = T3 + D * .14, TOTAL = D, WIN = 12;
+  const scanMs = T2 - T1, linkMs = T3 - T2, waveMs = T4 - T3, outMs = TOTAL - T4;
+  const cache = new Array(N).fill("");
+  const hue = i => 205 + 55 * (i / N);                                       // a calm blue to violet drift
+  const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+
+  function chipStyle(i, t) {
+    let text = orig[i], color = "", bg = "", shadow = "";
+    const h = hue(i);
+    if (t >= T1) {
+      const head = clamp((t - T1) / scanMs) * (N + WIN), d = head - i;
+      if (t < T3 && d >= 0 && d < WIN) {                                    // under the scanner: digits scramble
+        const f = 1 - d / WIN, b = Math.floor(t / 70);
+        text = orig[i].replace(/\d/g, (_, j) => Math.floor(rnd(i * 7 + j, b) * 10));
+        color = "#f2f5ff"; bg = `hsla(${h},65%,58%,${.25 + .35 * f})`;
+      } else if (d >= WIN || t >= T3) {                                       // already analysed: a faint, settled tint
+        const f = clamp(1 - (d - WIN) / 20);
+        color = `hsl(${h},60%,86%)`; bg = `hsla(${h},55%,60%,${.10 + .12 * f})`;
+        if (t >= T2 && t < T3) {                                              // pattern phase: repeated numbers light up in turn
+          const k = valOf[i];
+          if (k >= 0) {
+            const step = linkMs / top.length, since = t - T2 - k * step, a = since < 0 ? 0 : Math.exp(-Math.max(0, since - step) / (linkMs * .22)) * clamp(since / 120);
+            if (a > 0.02) { const hk = top[k].hue; bg = `hsla(${hk},70%,64%,${.18 + .55 * a})`; color = a > .55 ? "#0a1230" : `hsl(${hk},70%,88%)`; }
+          }
+        }
+        if (t >= T3 && t < T4) {                                              // closing wave: a soft light front passes over
+          const wx = -90 + (W + 180) * clamp((t - T3) / waveMs), a = clamp(1 - Math.abs(pos[i].x - wx) / 120);
+          if (a > 0) { bg = `rgba(220,230,255,${.10 + .35 * a})`; color = a > .6 ? "#0a1230" : color; }
+        }
+      }
+    }
+    const key = text + "|" + color + "|" + bg + "|" + shadow;
+    if (cache[i] === key) return; cache[i] = key;
+    const c = chips[i]; c.textContent = text;
+    c.style.color = color; c.style.background = bg; c.style.boxShadow = shadow;
+  }
+
+  function drawScene(t) {
+    ctx.clearRect(0, 0, W, H);
+    const fadeIn = clamp(t / T1), fadeOut = 1 - clamp((t - T4) / outMs);
+    cv.style.opacity = fadeIn * fadeOut; hud.style.opacity = clamp(fadeIn * (1 - clamp((t - T4) / (outMs * .8))));
+    const px0 = M - PX, px1 = W - M + PX, py0 = M - PY, py1 = H - M + PY;
+    ctx.strokeStyle = `rgba(120,140,220,${.06 * fadeIn})`; ctx.lineWidth = 1; ctx.beginPath();              // faint grid
+    for (let x = px0 + 12; x < px1; x += 44) { ctx.moveTo(x, py0); ctx.lineTo(x, py1); } for (let y = py0 + 12; y < py1; y += 44) { ctx.moveTo(px0, y); ctx.lineTo(px1, y); } ctx.stroke();
+
+    if (t >= T1 && t < T3) {                                                  // scanner: a thin line under the row being read, and a short soft trail
+      const head = clamp((t - T1) / scanMs) * (N + WIN), hi = clamp(Math.floor(head), 0, N - 1), r = rows[rowOf[hi]];
+      if (head < N + WIN - 1 && t < T2) {
+        const g = ctx.createLinearGradient(r.x0 - 30, 0, r.x1 + 30, 0);
+        g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.12, "rgba(140,170,255,.5)"); g.addColorStop(.88, "rgba(140,170,255,.5)"); g.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = "rgba(120,150,255,.05)"; ctx.fillRect(r.x0 - 34, r.y - rh - 4, r.x1 - r.x0 + 68, 2 * rh + 8);
+        ctx.fillStyle = g; ctx.fillRect(r.x0 - 30, r.y + rh + 2, r.x1 - r.x0 + 60, 1.5);
+        const p = pos[hi], ti = clamp(hi - 8, 0, N - 1), tail = pos[ti];
+        if (rowOf[ti] === rowOf[hi]) { const tg = ctx.createLinearGradient(tail.x, 0, p.x, 0); tg.addColorStop(0, "rgba(0,0,0,0)"); tg.addColorStop(1, "rgba(170,195,255,.7)"); ctx.strokeStyle = tg; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(tail.x, tail.y + rh + 2); ctx.lineTo(p.x, p.y + rh + 2); ctx.stroke(); }
+        ctx.fillStyle = "rgba(230,238,255,.9)"; ctx.beginPath(); ctx.arc(p.x, p.y + rh + 2, 3.2, 0, 7); ctx.fill();
+      }
+    }
+    if (t >= T2 && t < T4) {                                                  // thin links between every occurrence of the most repeated numbers
+      const step = linkMs / top.length;
+      top.forEach((tp, k) => {
+        const since = t - T2 - k * step; if (since < 0) return;
+        const prog = clamp(since / (step * .95)), a = Math.exp(-Math.max(0, since - step) / (linkMs * .5)) * fadeOut; if (a < .03) return;
+        const m = tp.idx.length - 1; ctx.lineWidth = 1.5; ctx.strokeStyle = `hsla(${tp.hue},65%,68%,${.6 * a})`;
+        for (let j = 0; j < m; j++) {
+          const lp = clamp(prog * m - j); if (lp <= 0) break;
+          const A = pos[tp.idx[j]], B = pos[tp.idx[j + 1]], mx = (A.x + B.x) / 2, my = (A.y + B.y) / 2, dx = B.x - A.x, dy = B.y - A.y, off = .2 * (j % 2 ? 1 : -1);
+          const cx = mx - dy * off, cy = my + dx * off;
+          ctx.beginPath(); ctx.moveTo(A.x, A.y);
+          for (let q = 1; q <= 20; q++) { const u = q / 20 * lp, w = 1 - u; ctx.lineTo(w * w * A.x + 2 * w * u * cx + u * u * B.x, w * w * A.y + 2 * w * u * cy + u * u * B.y); }
+          ctx.stroke();
+        }
+      });
+    }
+    if (t >= T3 && t < T4) {                                                  // closing wave: a faint vertical band
+      const wx = -90 + (W + 180) * clamp((t - T3) / waveMs), g = ctx.createLinearGradient(wx - 120, 0, wx + 20, 0);
+      g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(1, "rgba(200,215,255,.22)");
+      ctx.fillStyle = g; ctx.fillRect(wx - 120, py0, 140, py1 - py0);
+    }
+    const ph = t < T2 ? "SCANNING" : t < T3 ? "FINDING PATTERNS" : "SCAN COMPLETE", info = $("aiinfo");   // HUD readout
+    $("aiphase").textContent = ph;
+    if (t < T2) info.textContent = `${Math.min(N, Math.floor(clamp((t - T1) / scanMs) * (N + WIN)))} / ${N} numbers`;
+    else if (t < T3) { const k = Math.min(top.length - 1, Math.floor((t - T2) / (linkMs / top.length))); info.textContent = `“${top[k].v}” × ${top[k].idx.length}`; }
+    else info.textContent = `${N} numbers`;
+    $("aibar").style.width = clamp(t / T4) * 100 + "%";
+  }
+  function draw(t) { for (let i = 0; i < N; i++) chipStyle(i, t); drawScene(t); }
+  function start() { left.classList.add("aifx"); hud.style.display = "flex"; }
+  function finish() {                                                         // back to the numbers exactly as printed
+    chips.forEach((c, i) => { c.textContent = orig[i]; c.removeAttribute("style"); });
+    left.classList.remove("aifx"); cv.style.opacity = 0; hud.style.opacity = 0;
+    setTimeout(() => { if (left.classList.contains("aifx")) return; cv.style.display = "none"; hud.style.display = "none"; ctx.clearRect(0, 0, W, H); }, 600);
+  }
+  return { total: TOTAL, draw, start, finish };
+}
+let aiRunning = false, aiPaused = false, aiStop = false;
+function aiButtons() {
+  $("aiBtn").textContent = !aiRunning ? "✦ Ai effect" : aiPaused ? "▶ Resume" : "❚❚ Pause";
+  $("aiBtn").disabled = running; $("play").disabled = aiRunning; $("restart").disabled = aiRunning; $("aistop").hidden = !aiRunning;
+}
+async function aiEffect() {
+  if (running || aiRunning) return;
+  aiRunning = true; aiPaused = false; aiStop = false; aiButtons();
+  $("left").classList.remove("away"); camHome(0);                              // numbers on screen, camera at home
+  await new Promise(r => requestAnimationFrame(() => r()));
+  const fx = buildAiEffect(+$("aidur").value * 1000); fx.start();
+  await new Promise(res => {
+    let t = 0, last = performance.now();
+    const frame = now => {
+      const dt = now - last; last = now;
+      if (aiStop) return res();
+      if (!aiPaused) t += Math.min(dt, 60);
+      fx.draw(t);
+      if (t >= fx.total) res(); else requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+  fx.finish(); aiRunning = false; aiPaused = false; aiStop = false; aiButtons();
+}
+$("aiBtn").onclick = () => { if (!aiRunning) aiEffect(); else { aiPaused = !aiPaused; aiButtons(); } };
+$("aistop").onclick = () => { aiStop = true; aiPaused = false; };
+$("aidur").oninput = e => { $("aiv").textContent = (+e.target.value).toFixed(1).replace(".0", "") + " s"; };
+$("speed").oninput = e => { $("sv").textContent = e.target.value + "×"; };
+$("pace").oninput = e => { $("pv").textContent = (+e.target.value).toFixed(1) + " w/s"; };
+$("capchk").onchange = e => $("cap").classList.toggle("off", !e.target.checked);
+$("cap").classList.add("off");
+addEventListener("resize", () => { if (aiRunning) aiStop = true; fit(); layout(); }); fit();
+(document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve()).then(layout); layout();
+addEventListener("keydown", e => {
+  if (e.code === "Space") { e.preventDefault(); toggle(); }
+  else if (e.key === "h" || e.key === "H") { $("bar").classList.toggle("hidden"); $("view").classList.toggle("full"); fit(); }
+});
+window.__aiTest = () => buildAiEffect(+$("aidur").value * 1000);
+</script>
+</body>
+</html>

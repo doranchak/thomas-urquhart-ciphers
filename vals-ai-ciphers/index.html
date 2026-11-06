@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vals got AI to solve two ciphers</title>
+<style>
+  :root{
+    --bg:#f6f3ea; --panel:#fdfcf8; --line:#e4dfce; --hair:#ece6d6;
+    --ink:#26231f; --muted:#8b8472; --chip:#ece6d6; --chipInk:#3b352a;
+    --green:#284d32; --glow:#2f9e5b; --glow2:#6fe0a2;
+  }
+  html,body{margin:0;height:100%;background:#0e0e0e;overflow:hidden}
+  #wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+  #stage{position:relative;width:1920px;height:1080px;flex:none;overflow:hidden;
+    background:var(--bg);color:var(--ink);
+    font-family:Charter,'Iowan Old Style',Georgia,serif}
+  #bgc{position:absolute;inset:0}
+  #vig{position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%,rgba(255,255,255,.55) 0%,rgba(255,255,255,0) 55%,rgba(120,100,50,.10) 100%)}
+
+  /* ---------- headline lockup (logo + tagline) ---------- */
+  #lockup{position:absolute;left:0;top:0;display:flex;align-items:flex-start;gap:28px;
+    transform-origin:0 0;white-space:nowrap;will-change:transform}
+  #logo{display:block;height:128px;width:auto}
+  #tagline{font-size:88px;font-weight:500;letter-spacing:-.005em;line-height:1;position:relative;top:7px}   /* text baseline lands on the wordmark baseline (~74% of logo height) */
+  #tagline .w{display:inline-block;margin-right:.26em}
+  #tagline .ai{color:var(--green);font-weight:700}
+  #tagline .em{font-style:italic}
+  #rule{position:absolute;left:40px;right:40px;top:112px;height:1px;background:var(--line);opacity:0}
+
+  /* ---------- status block (header, right) ---------- */
+  #status{position:absolute;right:40px;top:30px;text-align:right;opacity:0;
+    font:500 15px/1 Menlo,'SF Mono',monospace;letter-spacing:.16em;text-transform:uppercase}
+  #status .a{color:var(--green);font-weight:700;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+  #status .dot{width:10px;height:10px;border-radius:50%;background:var(--glow);box-shadow:0 0 10px var(--glow)}
+  #status .b{margin-top:11px;color:var(--muted);letter-spacing:.12em;font-size:14px}
+
+  /* ---------- 2 x 2 grid ---------- */
+  #grid{position:absolute;left:40px;top:128px;display:grid;
+    grid-template-columns:908px 908px;grid-template-rows:444px 444px;gap:24px}
+  .panel{position:relative;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);
+    border-radius:18px;padding:20px 30px 24px;display:flex;flex-direction:column;opacity:0;
+    box-shadow:0 1px 0 #fff inset,0 10px 28px rgba(80,66,30,.07);overflow:hidden}
+  .panel .ph{flex:none;height:46px;display:flex;align-items:center;justify-content:space-between;
+    border-bottom:1px solid var(--hair);margin-bottom:6px}
+  .panel .ttl{font-size:33px;font-weight:600;font-variant:small-caps;letter-spacing:.025em;white-space:nowrap}
+  .panel .tag{font:500 13.5px/1 Menlo,'SF Mono',monospace;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+  .panel .tag.on{color:var(--glow)}
+  .panel .body{flex:1;min-height:0;display:flex;align-items:center}
+  .panel .shade{position:absolute;inset:0;border-radius:18px;pointer-events:none;box-shadow:inset 0 0 0 2px rgba(47,158,91,0);opacity:1}
+  .panel .sweep{position:absolute;top:0;bottom:0;width:260px;left:-300px;pointer-events:none;
+    background:linear-gradient(90deg,rgba(111,224,162,0),rgba(111,224,162,.30),rgba(111,224,162,0))}
+
+  /* ciphertext chips */
+  .cwrap{position:relative;width:100%}
+  .crow{display:flex;gap:6px;margin-top:10px}
+  .crow.brk{margin-top:30px}
+  .cflow{display:flex;flex-wrap:wrap;gap:5px 4px;align-content:flex-start}
+  .chip{display:inline-block;box-sizing:border-box;text-align:center;border-radius:7px;
+    font-family:Menlo,'SF Mono',monospace;font-weight:600;line-height:1;
+    background:var(--chip);color:var(--chipInk);opacity:0}
+  .beam{position:absolute;left:0;top:0;width:3px;border-radius:2px;opacity:0;z-index:3;
+    background:linear-gradient(#a6f5c8,#2f9e5b);
+    box-shadow:0 0 10px 2px rgba(47,158,91,.65),0 0 34px 8px rgba(47,158,91,.28)}
+  .beam::before{content:'';position:absolute;right:3px;top:0;bottom:0;width:150px;
+    background:linear-gradient(90deg,rgba(47,158,91,0),rgba(47,158,91,.20))}
+  .band{position:absolute;left:-30px;right:-30px;top:0;opacity:0;z-index:1;
+    background:linear-gradient(90deg,rgba(47,158,91,.02),rgba(47,158,91,.075) 50%,rgba(47,158,91,.02));
+    border-top:1px solid rgba(47,158,91,.16);border-bottom:1px solid rgba(47,158,91,.16)}
+
+  /* plaintext */
+  .plain{position:relative;width:100%}
+  .pl{white-space:nowrap;font-weight:600;color:var(--ink)}
+  .sl{position:relative;display:inline-block}
+  .sl .rv{visibility:hidden}
+  .sl .sc{position:absolute;left:50%;top:0;transform:translateX(-50%);visibility:hidden;
+    font-weight:500;color:var(--glow)}
+  .sl .tk{position:absolute;left:12%;right:30%;top:calc(50% + .34em);height:2px;border-radius:1px;background:#e6dfca}
+  .sp{display:inline-block;width:.34em}
+  .cur{position:absolute;left:0;top:0;z-index:0;opacity:0;border-radius:4px;
+    background:rgba(47,158,91,.13);border-bottom:2px solid var(--glow);
+    box-shadow:0 6px 18px rgba(47,158,91,.35)}
+  .pband{position:absolute;left:-30px;right:-30px;top:0;opacity:0;z-index:0;
+    background:linear-gradient(90deg,rgba(47,158,91,.015),rgba(47,158,91,.06) 50%,rgba(47,158,91,.015))}
+  .pl,.sl{position:relative;z-index:2}
+  .pl{position:static}
+
+  /* connector badges between the rows */
+  .node{position:absolute;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;opacity:0;z-index:20;
+    background:var(--panel);border:1.5px solid var(--line);box-shadow:0 6px 18px rgba(60,50,20,.14)}
+  .node .ico{position:absolute;left:13px;top:13px;width:30px;height:30px;
+    background:url('../vals-logo-4k.png') 0 0/auto 30px no-repeat}
+  .node .ring{position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--glow);opacity:0}
+  .node .ck{position:absolute;right:-6px;bottom:-6px;width:24px;height:24px;border-radius:50%;
+    background:var(--glow);color:#fff;font:700 15px/24px Menlo,monospace;text-align:center;
+    transform:scale(0);box-shadow:0 2px 8px rgba(47,158,91,.5)}
+  #err{position:absolute;left:20px;top:20px;color:#b00020;font:16px Menlo,monospace;z-index:99;white-space:pre}
+</style>
+</head>
+<body>
+<div id="wrap"><div id="stage">
+  <canvas id="bgc" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+
+  <div id="rule"></div>
+  <div id="lockup">
+    <img id="logo" src="../vals-logo-4k.png" alt="Vals">
+    <div id="tagline">
+      <span class="w">got</span><span class="w ai">AI</span><span class="w">to</span><span class="w">solve</span><span class="w em">two</span><span class="w em">ciphers.</span>
+    </div>
+  </div>
+  <div id="status">
+    <div class="a"><i class="dot"></i><span id="st-a">AI decipherment</span></div>
+    <div class="b" id="st-b">ready</div>
+  </div>
+
+  <div id="grid"></div>
+  <div class="node" id="node0"><i class="ring"></i><i class="ico"></i><i class="ck">✓</i></div>
+  <div class="node" id="node1"><i class="ring"></i><i class="ico"></i><i class="ck">✓</i></div>
+  <div id="err"></div>
+</div></div>
+
+<script>
+/* =====================================================================
+   DATA
+   Cipher numbers: n = word number in a reference text; each gives one plaintext letter.
+   Distich: Urquhart, Works (1834).  Octastick: from the page + decipherment (9 groups, incl. "Decagram").
+   ===================================================================== */
+const DISTICH = {
+  title:'The Cyphral Distich',
+  cipher:[
+    5,3,27,38,32,14,21,8,66,8,70,39,5,9,12,18,2,3,56,5,1,7,3,2,13,19,3,25,9,3,16,6,
+    25,15,13,6,11,20,5,1,2,12,1,20,20,49,20,20,35,33,4,6,8,35,5,38,5,5,18,10,3,11,32,42],
+  plain:['O GOD UPHOLD KING','CHARLS THE SECOND AND','MAKE HIM THE SUPREME','RULER OF THIS LAND'],
+  cipherRows:[16,16,16,16], breakBefore:[2],
+};
+const OCTA_LINES = [
+  { plain:'GREAT LORD, MANTAINE THAT REGAL FAMILIE,',
+    cipher:[25,11,39,4,4,10,3,54,50,19,1,18,1,5,9,58,15,1,4,17,1,42,32,77,23,75,6,3,18,20,36,8,21] },
+  { plain:'WHEREOF KING CHARLS THE SECOND IS THE HEAD,',
+    cipher:[4,10,22,3,5,11,3,162,18,21,44,79,42,2,17,61,32,7,7,107,8,59,28,54,31,113,42,31,5,19,32,3,115,3,22] },
+  { plain:'AND GRANT THAT HE MAY BEARE THE SUPREME SWEIGH,',
+    cipher:[1,16,96,31,87,5,88,1,4,30,10,15,8,47,28,17,139,17,69,5,29,9,9,1,51,6,114,8,34,30,2,18,24,41,33,74,93,8] },
+  { plain:'WHERE ENGLISH, SCOTS, AND IRSH ARE BORNE AND BRED,',
+    cipher:[5,12,58,162,12,44,1,66,9,15,100,42,2,28,16,6,27,4,196,70,53,7,1,69,2,15,89,34,11,13,12,29,15,76,40,22,8,24,75] },
+  { plain:"AND OVERTHROW THIS USURP'D AUTHORITIE,",
+    cipher:[3,58,15,2,1,4,5,56,5,5,2,4,12,20,19,14,80,37,45,34,3,95,6,38,1,18,11,27,4,13,7,24] },
+  { plain:'REIGNE IN HIS ROYAL PREDECESSORS STEAD;',
+    cipher:[5,20,5,87,40,25,9,56,21,29,2,81,50,147,2,6,16,15,14,9,13,27,3,16,14,7,6,2,10,16,69,1,44] },
+  { plain:'LET HIM BE OUR SOLE CESAR, ARTUR, HECTOR,',
+    cipher:[38,3,3,2,10,34,8,18,9,28,2,4,6,2,201,10,13,6,1,36,1,31,4,17,54,16,5,22,11,5,31] },
+  { plain:'OUR EMPEROUR, KING, MONARCH AND PROTECTOR.',
+    cipher:[71,96,15,45,19,6,64,10,42,7,83,37,6,3,7,74,4,14,8,91,27,12,11,2,28,50,68,3,2,12,1,5,49,3] },
+  { plain:'AMEN, SO BE IT.',
+    cipher:[7,7,95,66,1,11,33,51,50,6] },
+];
+const OCTA = {
+  title:'The Cyfral Octastick',
+  cipher:OCTA_LINES.flatMap(l=>l.cipher),
+  plain:OCTA_LINES.map(l=>l.plain),
+};
+
+/* sanity: one cipher number per plaintext letter */
+const letters = s => s.replace(/[^A-Z]/g,'').length;
+const errs=[];
+OCTA_LINES.forEach((l,i)=>{ if(letters(l.plain)!==l.cipher.length) errs.push(`Octastick line ${i+1}: ${letters(l.plain)} letters vs ${l.cipher.length} numbers`); });
+if(DISTICH.plain.reduce((a,s)=>a+letters(s),0)!==DISTICH.cipher.length) errs.push('Distich letter/number mismatch');
+if(OCTA.cipher.length!==OCTA.plain.reduce((a,s)=>a+letters(s),0)) errs.push('Octastick total mismatch');
+document.getElementById('err').textContent=errs.join('\n');
+window.DATA_ERRORS=errs;
+
+/* =====================================================================
+   TIMELINE (seconds)
+   ===================================================================== */
+const TL = {
+  logoIn:0.35, tagIn:1.35, move0:3.75, move1:4.95,
+  topIn:4.65, botIn:6.05, chipWave:1.0,
+  scan0:7.45, scan1:21.25, unscramble:0.42,
+  total:25.6,
+};
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const eOut=t=>1-Math.pow(1-t,3);
+const eIO=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const smooth=t=>t*t*(3-2*t);
+const prog=u=>0.45*u+0.55*smooth(u);             // scan progress curve (eases in/out a little)
+function invProg(p){ let lo=0,hi=1; for(let i=0;i<48;i++){const m=(lo+hi)/2; prog(m)<p?lo=m:hi=m;} return (lo+hi)/2; }
+const mixc=(a,b,f)=>`rgb(${Math.round(lerp(a[0],b[0],f))},${Math.round(lerp(a[1],b[1],f))},${Math.round(lerp(a[2],b[2],f))})`;
+const C={ chipBg:[236,230,214], chipInk:[59,53,42], doneBg:[214,232,217], doneInk:[36,82,50], hotBg:[47,158,91], hotInk:[255,255,255],
+          ink:[38,35,31], hotText:[31,150,84] };
+function el(tag,cls,parent,html){ const e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; if(parent)parent.appendChild(e); return e; }
+
+/* =====================================================================
+   BUILD
+   ===================================================================== */
+const grid=document.getElementById('grid');
+function makePanel(title,tag){
+  const root=el('div','panel',grid);
+  const ph=el('div','ph',root); el('div','ttl',ph,title); const tg=el('div','tag',ph,tag);
+  const body=el('div','body',root);
+  const shade=el('div','shade',root); const sweep=el('div','sweep',root);
+  return {root,body,tag:tg,shade,sweep};
+}
+const P_TL=makePanel(DISTICH.title,`Ciphertext · ${DISTICH.cipher.length} numbers`);
+const P_TR=makePanel(OCTA.title,`Ciphertext · ${OCTA.cipher.length} numbers`);
+const P_BL=makePanel('Plaintext','Awaiting decipherment');
+const P_BR=makePanel('Plaintext','Awaiting decipherment');
+
+function buildCipher(panel,cfg,font){
+  const wrap=el('div','cwrap',panel.body);
+  const chips=[];
+  const mk=(v,parent)=>{ const c=el('span','chip',parent,String(v)); chips.push(c); return c; };
+  if(cfg.cipherRows){
+    let k=0;
+    cfg.cipherRows.forEach((n,ri)=>{
+      const row=el('div','crow'+((cfg.breakBefore||[]).includes(ri)?' brk':''),wrap);
+      for(let q=0;q<n;q++){ const c=mk(cfg.cipher[k++],row); c.style.width='47px'; c.style.height='44px'; c.style.lineHeight='44px'; c.style.fontSize='24px'; }
+    });
+  }else{
+    const flow=el('div','cflow',wrap);
+    cfg.cipher.forEach(v=>mk(v,flow));
+    const body=panel.body;
+    for(const fs of [18,17,16,15.5,15,14.5,14,13.5,13]){
+      chips.forEach(c=>{ c.style.fontSize=fs+'px'; c.style.padding=(fs*.34)+'px '+(fs*.46)+'px'; c.style.borderRadius=(fs*.42)+'px'; });
+      if(flow.offsetHeight<=body.clientHeight-4) break;
+    }
+  }
+  const beam=el('div','beam',wrap), band=el('div','band',wrap);
+  return {wrap,chips,beam,band};
+}
+function buildPlain(panel,rows,fontPx,lineH,tracking){
+  const wrap=el('div','plain',panel.body);
+  const band=el('div','pband',wrap), cur=el('div','cur',wrap);
+  const slots=[];
+  rows.forEach(text=>{
+    const line=el('div','pl',wrap); line.style.fontSize=fontPx+'px'; line.style.lineHeight=lineH+'px'; line.style.letterSpacing=tracking+'em';
+    let last=null;
+    for(const ch of text){
+      if(ch===' '){ el('span','sp',line); last=null; }
+      else if(/[A-Z]/.test(ch)){
+        const s=el('span','sl',line);
+        el('i','tk',s); const sc=el('b','sc',s); const rv=el('span','rv',s,ch);
+        last={s,sc,rv}; slots.push(last);
+      } else if(last){ last.rv.textContent+=ch; }
+    }
+  });
+  return {wrap,slots,band,cur};
+}
+const CD=buildCipher(P_TL,DISTICH), CO=buildCipher(P_TR,OCTA);
+const PD=buildPlain(P_BL,DISTICH.plain,50,72,.10);
+// fit the Octastick plaintext to the panel width
+let ofs=23; const POwidth=P_BR.body.clientWidth||848;
+const PO=buildPlain(P_BR,OCTA.plain,ofs,32,.075);
+(function fit(){
+  const maxW=()=>Math.max(...[...PO.wrap.querySelectorAll('.pl')].map(l=>{ // natural width of the line's content
+    const r=document.createRange(); r.selectNodeContents(l); return r.getBoundingClientRect().width; }));
+  const avail=P_BR.body.clientWidth;
+  let guard=0; while(guard++<30 && maxW()>avail-6 && ofs>14){ ofs-=.5; PO.wrap.querySelectorAll('.pl').forEach(l=>l.style.fontSize=ofs+'px'); }
+})();
+
+/* geometry (measured once; layout is static) */
+function geom(list){ return list.map(e=>({x:e.offsetLeft,y:e.offsetTop,w:e.offsetWidth,h:e.offsetHeight})); }
+let gCD,gCO,gPD,gPO;
+function measure(){ gCD=geom(CD.chips); gCO=geom(CO.chips); gPD=geom(PD.slots.map(s=>s.s)); gPO=geom(PO.slots.map(s=>s.s)); }
+measure();
+
+/* hit times: when the scan head reaches number i */
+function hitTimes(N){ const out=[]; for(let i=0;i<N;i++){ out.push(TL.scan0+invProg(i/N)*(TL.scan1-TL.scan0)); } return out; }
+const hitD=hitTimes(DISTICH.cipher.length), hitO=hitTimes(OCTA.cipher.length);
+const lastHit=Math.max(hitD[hitD.length-1],hitO[hitO.length-1])+TL.unscramble;
+
+/* =====================================================================
+   BACKGROUND — faint drifting cipher numbers
+   ===================================================================== */
+const bg=document.getElementById('bgc').getContext('2d');
+function rng(seed){ return ()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const R=rng(1653), drift=[];
+for(let i=0;i<150;i++){ drift.push({x:R()*1920,y:R()*1200,v:6+R()*16,s:16+Math.floor(R()*26),n:String(1+Math.floor(Math.pow(R(),2.2)*140)),a:.35+R()*.65}); }
+function drawBg(t,alpha){
+  bg.clearRect(0,0,1920,1080); bg.textBaseline='top';
+  for(const d of drift){
+    const y=((d.y-d.v*t)%1200+1200)%1200-60;
+    bg.font=`600 ${d.s}px Menlo, monospace`; bg.fillStyle=`rgba(40,77,50,${(.075*d.a*alpha).toFixed(4)})`; bg.fillText(d.n,d.x,y);
+  }
+}
+
+/* =====================================================================
+   FRAME
+   ===================================================================== */
+const POOL='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+const hash=(a,b)=>{ let h=(a*374761393+b*668265263)|0; h=(h^(h>>>13))*1274126177|0; return (h^(h>>>16))>>>0; };
+const lockup=document.getElementById('lockup'), tagWords=[...document.querySelectorAll('#tagline .w')];
+const status=document.getElementById('status'), stA=document.getElementById('st-a'), stB=document.getElementById('st-b'), dot=status.querySelector('.dot');
+const rule=document.getElementById('rule');
+const nodes=[document.getElementById('node0'),document.getElementById('node1')];
+const LK={w:0,h:0}; // natural lockup size, measured lazily
+function lockSize(){ if(!LK.w){ lockup.style.transform='none'; LK.w=lockup.offsetWidth; LK.h=lockup.offsetHeight; } }
+
+const chipState=new Map(), slotState=new Map();
+function setOnce(map,key,val,fn){ if(map.get(key)!==val){ map.set(key,val); fn(); } }
+
+function updateChips(ch,hits,t,reveal0){
+  const N=ch.chips.length;
+  for(let i=0;i<N;i++){
+    const c=ch.chips[i];
+    // intro reveal wave
+    const rv=clamp((t-(reveal0+(i/N)*TL.chipWave))/0.28);
+    if(t<hits[i]){
+      if(rv<1){ c.style.opacity=eOut(rv); c.style.transform=`translateY(${(1-eOut(rv))*10}px)`; chipState.set(c,'rv'); }
+      else setOnce(chipState,c,'pend',()=>{ c.style.opacity=1; c.style.transform='none'; c.style.background=mixc(C.chipBg,C.chipBg,0); c.style.color=mixc(C.chipInk,C.chipInk,0); c.style.boxShadow='none'; });
+    } else {
+      const a=t-hits[i], f=Math.exp(-a/0.5);
+      if(f>0.012){
+        c.style.opacity=1;
+        c.style.background=mixc(C.doneBg,C.hotBg,f); c.style.color=mixc(C.doneInk,C.hotInk,f);
+        c.style.transform=`scale(${1+0.22*f})`;
+        c.style.boxShadow=`0 0 ${16*f}px rgba(47,158,91,${.75*f})`;
+        chipState.set(c,'flash');
+      } else setOnce(chipState,c,'done',()=>{ c.style.opacity=1; c.style.transform='none'; c.style.background=mixc(C.doneBg,C.doneBg,0); c.style.color=mixc(C.doneInk,C.doneInk,0); c.style.boxShadow='none'; });
+    }
+  }
+}
+function updateSlots(pl,hits,t,showTicks){
+  const N=pl.slots.length;
+  for(let i=0;i<N;i++){
+    const sl=pl.slots[i], tHit=hits[i], tLock=tHit+TL.unscramble;
+    if(t<tHit){
+      setOnce(slotState,sl,'p'+showTicks,()=>{ sl.rv.style.visibility='hidden'; sl.sc.style.visibility='hidden'; sl.s.querySelector('.tk').style.opacity=showTicks; });
+    } else if(t<tLock){
+      const g=POOL[hash(i,Math.floor(t*26))%POOL.length];
+      sl.sc.textContent=g; sl.sc.style.visibility='visible'; sl.rv.style.visibility='hidden';
+      sl.s.querySelector('.tk').style.opacity=0; slotState.set(sl,'s');
+    } else {
+      const f=Math.exp(-(t-tLock)/0.55);
+      sl.sc.style.visibility='hidden'; sl.rv.style.visibility='visible'; sl.s.querySelector('.tk').style.opacity=0;
+      if(f>0.015){ sl.rv.style.color=mixc(C.ink,C.hotText,f); sl.rv.style.textShadow=`0 0 ${14*f}px rgba(47,158,91,${.7*f})`; slotState.set(sl,'f'); }
+      else setOnce(slotState,sl,'d',()=>{ sl.rv.style.color=''; sl.rv.style.textShadow='none'; });
+    }
+  }
+}
+function placeScan(P,N,g,beam,band,op){
+  const j=Math.min(N-1,Math.floor(P)), fr=clamp(P-j), r=g[j];
+  beam.style.opacity=op; band.style.opacity=op;
+  beam.style.transform=`translate(${r.x+fr*r.w-1.5}px,${r.y-6}px)`; beam.style.height=(r.h+12)+'px';
+  band.style.transform=`translateY(${r.y-4}px)`; band.style.height=(r.h+8)+'px';
+}
+function placeCursor(P,N,g,cur,band,op){
+  const j=Math.min(N-1,Math.floor(P)), fr=clamp(P-j), r=g[j], n=g[Math.min(N-1,j+1)];
+  const sameRow=Math.abs(n.y-r.y)<2;
+  const x=sameRow?lerp(r.x,n.x,fr):r.x, w=sameRow?lerp(r.w,n.w,fr):r.w;
+  cur.style.opacity=op; band.style.opacity=op;
+  cur.style.transform=`translate(${x}px,${r.y}px)`; cur.style.width=w+'px'; cur.style.height=r.h+'px';
+  band.style.transform=`translateY(${r.y}px)`; band.style.height=r.h+'px';
+}
+
+function renderAt(t){
+  lockSize();
+  const scanning=t>=TL.scan0 && t<lastHit;
+  const done=t>=lastHit;
+  /* background */
+  drawBg(t, lerp(1,.45,smooth(clamp((t-TL.move0)/1.6))));
+
+  /* lockup: appears at centre, then settles into the header */
+  const sFinal=0.5;
+  const mv=eIO(clamp((t-TL.move0)/(TL.move1-TL.move0)));
+  const sc=lerp(1,sFinal,mv);
+  const cx0=(1920-LK.w)/2, cy0=(1080-LK.h)/2-14;
+  const x=lerp(cx0,40,mv), y=lerp(cy0,(112-LK.h*sFinal)/2,mv);
+  lockup.style.transform=`translate(${x}px,${y}px) scale(${sc})`;
+  const logoA=eOut(clamp((t-TL.logoIn)/0.9));
+  document.getElementById('logo').style.opacity=logoA;
+  document.getElementById('logo').style.transform=`translateY(${(1-logoA)*14}px)`;
+  tagWords.forEach((w,i)=>{ const a=eOut(clamp((t-(TL.tagIn+i*0.13))/0.55)); w.style.opacity=a; w.style.transform=`translateY(${(1-a)*18}px)`; });
+  rule.style.opacity=eOut(clamp((t-TL.move0-0.6)/0.8));
+
+  /* panels */
+  const pa=(p,t0)=>{ const a=eOut(clamp((t-t0)/0.8)); p.root.style.opacity=a; p.root.style.transform=`translateY(${(1-a)*26}px)`; return a; };
+  pa(P_TL,TL.topIn); pa(P_TR,TL.topIn+0.16); pa(P_BL,TL.botIn); pa(P_BR,TL.botIn+0.16);
+  nodes.forEach((n,i)=>{
+    const a=eOut(clamp((t-(TL.botIn+0.55+i*0.12))/0.6)), cxn=i===0?494:1426;
+    n.style.opacity=a; n.style.left=cxn+'px'; n.style.top='584px'; n.style.transform=`scale(${.6+.4*a})`;
+    const ring=n.querySelector('.ring');
+    if(scanning){ const ph=((t*0.9)+i*0.35)%1; ring.style.opacity=(1-ph)*.7; ring.style.transform=`scale(${1+ph*.7})`; }
+    else ring.style.opacity=0;
+    const ck=n.querySelector('.ck'), ca=done?eOut(clamp((t-lastHit-0.25)/0.45)):0;
+    ck.style.transform=`scale(${ca<1&&ca>0?1+0.25*Math.sin(ca*Math.PI)+ca*0:ca})`;
+  });
+
+  /* chips + plaintext */
+  const cw0=TL.topIn+0.25, cw1=TL.topIn+0.41;
+  updateChips(CD,hitD,t,cw0); updateChips(CO,hitO,t,cw1);
+  const ticks=eOut(clamp((t-TL.botIn-0.3)/0.6));
+  updateSlots(PD,hitD,t,ticks); updateSlots(PO,hitO,t,ticks);
+
+  /* scan heads */
+  const u=clamp((t-TL.scan0)/(TL.scan1-TL.scan0)), p=prog(u);
+  const Pd=p*DISTICH.cipher.length, Po=p*OCTA.cipher.length;
+  const op=(scanning||t>=TL.scan0)? clamp((t-TL.scan0)/0.35)*(1-clamp((t-TL.scan1)/0.45)) : 0;
+  placeScan(Math.min(Pd,DISTICH.cipher.length-1e-3),DISTICH.cipher.length,gCD,CD.beam,CD.band,op);
+  placeScan(Math.min(Po,OCTA.cipher.length-1e-3),OCTA.cipher.length,gCO,CO.beam,CO.band,op);
+  placeCursor(Math.min(Pd,DISTICH.cipher.length-1e-3),DISTICH.cipher.length,gPD,PD.cur,PD.band,op);
+  placeCursor(Math.min(Po,OCTA.cipher.length-1e-3),OCTA.cipher.length,gPO,PO.cur,PO.band,op);
+
+  /* tags + status */
+  const pct=Math.round(p*100);
+  const tagTxt=done?'✓ Deciphered':(t>=TL.scan0?`Deciphering · ${String(pct).padStart(2,'0')}%`:'Awaiting decipherment');
+  [P_BL,P_BR].forEach(pn=>{ pn.tag.textContent=tagTxt; pn.tag.classList.toggle('on',t>=TL.scan0); });
+  const total=DISTICH.cipher.length+OCTA.cipher.length;
+  const read=Math.min(total,Math.floor(Pd)+Math.floor(Po));
+  const sa=eOut(clamp((t-(TL.botIn+0.4))/0.7));
+  status.style.opacity=sa; status.style.transform=`translateY(${(1-sa)*-8}px)`;
+  if(done){ stA.textContent='2 of 2 ciphers solved'; stB.textContent=`${total} / ${total} numbers decoded`; dot.style.opacity=1; }
+  else if(t>=TL.scan0){ stA.textContent='AI decipherment'; stB.textContent=`scanning · ${String(read).padStart(3,'0')} / ${total} numbers`; dot.style.opacity=.55+.45*Math.sin(t*9); }
+  else { stA.textContent='AI decipherment'; stB.textContent='ready'; dot.style.opacity=.55+.45*Math.sin(t*3); }
+
+  /* completion flourish: green edge + light sweep over the plaintext panels */
+  const ft=t-lastHit;
+  [P_BL,P_BR].forEach((pn,i)=>{
+    const a=eOut(clamp((ft-0.1-i*0.12)/0.5));
+    pn.shade.style.boxShadow=`inset 0 0 0 ${2*a}px rgba(47,158,91,${.85*a}), inset 0 0 ${40*a}px rgba(47,158,91,${.10*a})`;
+    const sw=clamp((ft-i*0.12)/1.1);
+    pn.sweep.style.transform=`translateX(${lerp(0,1200,eIO(sw))}px)`; pn.sweep.style.opacity=(sw>0&&sw<1)?1:0;
+  });
+}
+window.renderAt=renderAt;
+window.TIMELINE={total:TL.total, scan0:TL.scan0, scan1:TL.scan1, lastHit};
+window.READY=true;
+
+/* ---- live preview in a normal browser window ---- */
+(function(){
+  const q=new URLSearchParams(location.search);
+  const stage=document.getElementById('stage');
+  const fit=()=>{ if(q.has('render')){ stage.style.transform='none'; return; }
+    stage.style.transform=`scale(${Math.min(innerWidth/1920,innerHeight/1080)})`; };
+  addEventListener('resize',fit); fit();
+  if(q.has('render')) return;
+  if(q.has('t')){ renderAt(parseFloat(q.get('t'))); return; }
+  let start=performance.now();
+  addEventListener('click',()=>start=performance.now());
+  (function loop(now){ let t=(now-start)/1000; if(t>TL.total+2.5){ start=now; t=0; } renderAt(Math.min(t,TL.total)); requestAnimationFrame(loop); })(start);
+})();
+</script>
+</body>
+</html>
